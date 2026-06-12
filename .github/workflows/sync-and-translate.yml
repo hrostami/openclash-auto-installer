@@ -1,0 +1,46 @@
+name: Sync and Translate
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-translate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream and sync
+        run: |
+          git remote add upstream https://github.com/slobys/openclash-auto-installer.git || true
+          git fetch upstream main
+          git merge upstream/main --allow-unrelated-histories -X theirs -m "chore: sync upstream" || true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install deep-translator
+
+      - name: Translate Chinese strings
+        run: python .github/scripts/translate.py
+
+      - name: Commit translations
+        run: |
+          git add -A
+          git diff --cached --quiet || git commit -m "chore: translate Chinese strings"
+          git push
