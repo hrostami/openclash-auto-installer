@@ -26,8 +26,9 @@ jobs:
         run: |
           git remote add upstream https://github.com/slobys/openclash-auto-installer.git || true
           git fetch upstream main
+          git config merge.ours.driver true
           git merge upstream/main --allow-unrelated-histories -X theirs -m "chore: sync upstream" || true
-
+          
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
