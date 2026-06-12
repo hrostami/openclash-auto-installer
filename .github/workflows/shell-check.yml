@@ -16,6 +16,7 @@ jobs:
         with:
           scandir: '.'
           ignore_paths: '.github'
+          severity: error
 
   sh-syntax:
     runs-on: ubuntu-latest
