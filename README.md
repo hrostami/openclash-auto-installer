@@ -1,12 +1,12 @@
 # OpenClash Auto Installer
 
-![Release](https://img.shields.io/github/v/release/slobys/openclash-auto-installer?style=flat-square)
-![License](https://img.shields.io/github/license/slobys/openclash-auto-installer?style=flat-square)
-![Workflow](https://img.shields.io/github/actions/workflow/status/slobys/openclash-auto-installer/shell-check.yml?branch=main&style=flat-square)
+![Release](https://img.shields.io/github/v/release/hrostami/openclash-auto-installer?style=flat-square)
+![License](https://img.shields.io/github/license/hrostami/openclash-auto-installer?style=flat-square)
+![Workflow](https://img.shields.io/github/actions/workflow/status/hrostami/openclash-auto-installer/shell-check.yml?branch=main&style=flat-square)
 
-适用于 **OpenWrt / iStoreOS / ImmortalWrt** 的代理插件安装、更新、卸载与检查脚本集合。
+Applicable to **OpenWrt / iStoreOS / ImmortalWrt** A collection of agent plug-in installation, update, uninstall and check scripts.
 
-已集成：
+Already integrated:
 
 - OpenClash
 - PassWall
@@ -17,111 +17,111 @@
 
 ---
 
-## 一键使用
+## One click to use
 
-推荐直接使用菜单模式，安装、更新、检查版本和卸载都在菜单里：
-
-```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/slobys/openclash-auto-installer/main/menu.sh)"
-```
-
-固定稳定版可使用 Release 标签，例如：
+It is recommended to use the menu mode directly. Installation, updating, checking version and uninstalling are all in the menu:
 
 ```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/slobys/openclash-auto-installer/v1.2.4/menu.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/hrostami/openclash-auto-installer/main/menu.sh)"
 ```
 
-如果 GitHub raw 访问慢，可用 jsDelivr：
+Fixed stable version available Release tags, for example:
 
 ```sh
-sh -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/slobys/openclash-auto-installer@main/menu.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/hrostami/openclash-auto-installer/v1.2.4/menu.sh)"
 ```
 
-菜单结构：
+if GitHub raw Access is slow, available jsDelivr:
+
+```sh
+sh -c "$(curl -fsSL https://cdn.jsdelivr.net/gh/hrostami/openclash-auto-installer@main/menu.sh)"
+```
+
+Menu structure:
 
 ```text
-1. 检查插件更新
-2. 安装插件
-3. 卸载插件
-0. 退出
+1. Check for plugin updates
+2. Install plugin
+3. Uninstall plugin
+0. Exit
 ```
 
 ---
 
-## 支持范围
+## Support scope
 
-推荐使用：
+Recommended use:
 
 - OpenWrt 24.10.x
 - iStoreOS 24.10.x
 - ImmortalWrt 24.10.x
 
-可尝试但建议先验证：
+You can try but it is recommended to verify first:
 
-- OpenWrt 25.12+ / `apk` 环境
+- OpenWrt 25.12+ / `apk` environment
 - OpenWrt 23.05.x / 22.03.x
-- 第三方固件或精简固件
+- Third-party firmware or stripped-down firmware
 
 ---
 
-## 功能说明
+## Function description
 
-| 插件 | 支持内容 | 说明 |
+| plug-in | Support content | Description |
 |------|----------|------|
-| OpenClash | 安装 / 更新 / 核心安装 / 卸载 / 更新检测 | 自动识别 Meta / Smart Meta 内核 |
-| PassWall | 安装 / 更新 / 卸载 / 更新检测 | 支持 `opkg`；OpenWrt 25.12+ 下尝试安装上游 `.apk` 构建 |
-| PassWall2 | 安装 / 更新 / 卸载 / 更新检测 | 支持 `opkg`；OpenWrt 25.12+ 下尝试安装上游 `.apk` 构建 |
-| Nikki | 安装 / 更新 / 卸载 / 更新检测 | 需要 `firewall4/nftables` |
-| SmartDNS | 安装 / 更新 / 卸载 / 更新检测 | 使用官方 GitHub Release 包 |
-| MosDNS | 安装 / 更新 / 卸载 / 更新检测 | 使用 `sbwml/luci-app-mosdns` GitHub Release 包 |
+| OpenClash | Installation / update / Core installation / Uninstall / Update detection | automatic recognition Meta / Smart Meta Kernel |
+| PassWall | Installation / update / Uninstall / Update detection | support `opkg`;OpenWrt 25.12+ Next try to install the upstream `.apk` build |
+| PassWall2 | Installation / update / Uninstall / Update detection | support `opkg`;OpenWrt 25.12+ Next try to install the upstream `.apk` build |
+| Nikki | Installation / update / Uninstall / Update detection | need `firewall4/nftables` |
+| SmartDNS | Installation / update / Uninstall / Update detection | Use official GitHub Release package |
+| MosDNS | Installation / update / Uninstall / Update detection | use `sbwml/luci-app-mosdns` GitHub Release package |
 
 ---
 
-## OpenWrt 25.12+ / apk 说明
+## OpenWrt 25.12+ / apk Description
 
-OpenWrt 25.12+ 使用 `apk` 包管理器，本项目已同步适配：
+OpenWrt 25.12+ use `apk` Package manager, this project has been adapted simultaneously:
 
-- 安装 / 更新
-- 检查更新
-- 卸载
+- Installation / update
+- Check for updates
+- Uninstall
 
-PassWall / PassWall2 在 25.12+ 下会尝试安装上游 `.apk` 构建，实际可用性取决于上游是否发布对应架构包。
-
----
-
-## 重要说明
-
-- 推荐 OpenWrt / iStoreOS / ImmortalWrt 24.x 及以上，整体更稳定。
-- 低版本、魔改固件、精简固件可能遇到依赖或软件源不兼容。
-- OpenWrt 25.12+ 的 `apk` 环境已做基础适配，但仍可能受上游包影响。
-- Nikki 不支持 `iptables` 防火墙栈，需要 `firewall4/nftables`。
-- SmartDNS 只安装程序和 LuCI 界面，不自动接管或改写 DNS 配置。
-- MosDNS 只安装程序、LuCI 界面和上游 Release 包内的基础数据包，不自动接管或改写 DNS 配置。
-- 卸载默认走安全卸载，只移除主包和对应配置，不做激进清理。
+PassWall / PassWall2 in 25.12+ I will try to install the upstream next `.apk` Build, actual availability depends on whether the upstream releases the corresponding architecture package.
 
 ---
 
-## 文件说明
+## Important note
 
-| 文件 | 作用 |
+- Recommended OpenWrt / iStoreOS / ImmortalWrt 24.x and above, the overall stability is higher.
+- Lower versions, modified firmware, and streamlined firmware may encounter dependencies or software source incompatibilities.
+- OpenWrt 25.12+ of `apk` The environment has been basically adapted, but it may still be affected by upstream packages.
+- Nikki Not supported `iptables` Firewall stack, required `firewall4/nftables`.
+- SmartDNS Just install the program and LuCI interface, does not automatically take over or rewrite DNS configuration.
+- MosDNS Only install the program,LuCI Interface and upstream Release The basic data package in the package is not automatically taken over or rewritten. DNS configuration.
+- The default uninstallation method is safe uninstallation, which only removes the main package and corresponding configuration, and does not perform radical cleanup.
+
+---
+
+## File description
+
+| File | function |
 |------|------|
-| `menu.sh` | 统一菜单入口 |
-| `install.sh` | OpenClash 安装 / 更新 |
-| `update.sh` | OpenClash 快速更新入口 |
-| `repair.sh` | OpenClash 基础修复 |
-| `passwall.sh` | PassWall 安装 / 更新 |
-| `passwall2.sh` | PassWall2 安装 / 更新 |
-| `nikki.sh` | Nikki 安装 / 更新 |
-| `smartdns.sh` | SmartDNS 安装 / 更新 |
-| `mosdns.sh` | MosDNS 安装 / 更新 |
-| `check-updates.sh` | 检查插件更新 |
-| `uninstall.sh` | 安全卸载插件 |
-| `auto-download-pro.sh` | 旧入口兼容包装器，已转交给 `passwall.sh` |
-| `test-auto-download.sh` | 旧测试入口兼容包装器，已转交给 `passwall.sh` |
+| `menu.sh` | Unified menu entry |
+| `install.sh` | OpenClash Installation / update |
+| `update.sh` | OpenClash Quick update entry |
+| `repair.sh` | OpenClash Basic repair |
+| `passwall.sh` | PassWall Installation / update |
+| `passwall2.sh` | PassWall2 Installation / update |
+| `nikki.sh` | Nikki Installation / update |
+| `smartdns.sh` | SmartDNS Installation / update |
+| `mosdns.sh` | MosDNS Installation / update |
+| `check-updates.sh` | Check for plugin updates |
+| `uninstall.sh` | Safely uninstall plugins |
+| `auto-download-pro.sh` | Old portal compatibility wrapper, forwarded to `passwall.sh` |
+| `test-auto-download.sh` | The old test entry compatibility wrapper has been forwarded to `passwall.sh` |
 
 ---
 
-## 致谢
+## Acknowledgments
 
 - OpenClash: <https://github.com/vernesong/OpenClash>
 - PassWall: <https://github.com/Openwrt-Passwall/openwrt-passwall>

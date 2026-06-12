@@ -6,7 +6,7 @@ set -eu
 # Keep this filename working by delegating to the maintained PassWall installer,
 # which now supports both opkg and OpenWrt 25.12+ apk environments.
 
-REPO="slobys/openclash-auto-installer"
+REPO="hrostami/openclash-auto-installer"
 BRANCH="main"
 TMP_SCRIPT="/tmp/passwall-installer.sh"
 

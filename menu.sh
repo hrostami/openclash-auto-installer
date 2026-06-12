@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REPO="slobys/openclash-auto-installer"
+REPO="hrostami/openclash-auto-installer"
 BRANCH="main"
 BASE_URL="https://raw.githubusercontent.com/$REPO/$BRANCH"
 RESOLVED_BASE_URL=""

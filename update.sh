@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-SCRIPT_URL="https://raw.githubusercontent.com/slobys/openclash-auto-installer/main/install.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/hrostami/openclash-auto-installer/main/install.sh"
 TMP_FILE="/tmp/openclash-auto-update.sh"
 
 log() {

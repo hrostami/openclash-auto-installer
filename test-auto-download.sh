@@ -5,7 +5,7 @@ set -eu
 # The old test downloader was opkg-only and duplicated PassWall download logic.
 # Keep this filename working by delegating to the maintained PassWall installer.
 
-REPO="slobys/openclash-auto-installer"
+REPO="hrostami/openclash-auto-installer"
 BRANCH="main"
 TMP_SCRIPT="/tmp/passwall-installer-test.sh"
 
