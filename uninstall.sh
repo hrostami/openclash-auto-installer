@@ -23,7 +23,7 @@ detect_pkg_mgr() {
     elif command -v apk >/dev/null 2>&1; then
         printf 'apk'
     else
-        die "未检测到 opkg 或 apk，当前系统暂不支持"
+        die "not detected opkg or apk, the current system does not support it yet"
     fi
 }
 
@@ -50,7 +50,7 @@ remove_pkg_if_installed() {
     MANUAL_CMD=""
 
     if ! pkg_installed "$PKG_MGR" "$PKG"; then
-        log "未安装 $PKG，跳过"
+        log "Not installed $PKG,jump over"
         return 0
     fi
 
@@ -59,19 +59,19 @@ remove_pkg_if_installed() {
             MANUAL_CMD="opkg remove $PKG"
             if ! OUTPUT="$(opkg remove "$PKG" 2>&1)"; then
                 printf '%s\n' "$OUTPUT"
-                warn "移除 $PKG 失败"
+                warn "Remove $PKG fail"
             else
                 printf '%s\n' "$OUTPUT"
             fi
             ;;
         apk)
             MANUAL_CMD="apk del $PKG"
-            apk del "$PKG" || warn "移除 $PKG 失败"
+            apk del "$PKG" || warn "Remove $PKG fail"
             ;;
     esac
 
     if pkg_installed "$PKG_MGR" "$PKG"; then
-        die "$PKG 仍未卸载成功，请检查依赖关系或手动执行: $MANUAL_CMD"
+        die "$PKG The uninstallation is still not successful, please check the dependencies or perform it manually.: $MANUAL_CMD"
     fi
 }
 
@@ -87,9 +87,9 @@ stop_disable_service() {
     if [ -x "/etc/init.d/$SVC" ]; then
         /etc/init.d/"$SVC" stop >/dev/null 2>&1 || true
         /etc/init.d/"$SVC" disable >/dev/null 2>&1 || true
-        log "已停止并禁用服务: $SVC"
+        log "Service stopped and disabled: $SVC"
     else
-        log "未发现服务脚本: $SVC，跳过"
+        log "Service script not found: $SVC,jump over"
     fi
 }
 
@@ -101,60 +101,60 @@ refresh_web() {
         /var/run/luci-indexcache
 
     if [ -x /etc/init.d/rpcd ]; then
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed"
     fi
 
-    warn "请刷新页面或切换一次左侧菜单，插件入口会自动更新；如仍未生效，再重新登录 LuCI"
+    warn "Please refresh the page or switch the left menu once, the plug-in entrance will be updated automatically; if it still does not take effect, log in again LuCI"
 }
 
 remove_openclash_core() {
     if [ -f /etc/openclash/core/clash_meta ]; then
         rm -f /etc/openclash/core/clash_meta
-        log "已删除 /etc/openclash/core/clash_meta"
+        log "Deleted /etc/openclash/core/clash_meta"
     else
-        warn "未发现 clash_meta 内核文件，跳过"
+        warn "not found clash_meta Kernel file, skip"
     fi
 }
 
 safe_uninstall_passwall() {
     PKG_MGR="$1"
-    log "开始安全卸载 PassWall（仅卸载主包）"
+    log "Start safe uninstallation PassWall(Only uninstall the main package)"
 
     stop_disable_service passwall
     remove_pkg_if_installed "$PKG_MGR" luci-i18n-passwall-zh-cn
     remove_pkg_if_installed "$PKG_MGR" luci-app-passwall
 
     if [ "$DELETE_CONFIG" -eq 1 ]; then
-        log "删除 PassWall 配置文件"
+        log "delete PassWall Configuration file"
         remove_paths /etc/config/passwall
     else
-        warn "默认保留 /etc/config/passwall 配置文件"
+        warn "Keep by default /etc/config/passwall Configuration file"
     fi
 
-    log "PassWall 安全卸载完成"
+    log "PassWall Safe uninstall complete"
 }
 
 safe_uninstall_passwall2() {
     PKG_MGR="$1"
-    log "开始安全卸载 PassWall2（仅卸载主包）"
+    log "Start safe uninstallation PassWall2(Only uninstall the main package)"
 
     stop_disable_service passwall2
     remove_pkg_if_installed "$PKG_MGR" luci-i18n-passwall2-zh-cn
     remove_pkg_if_installed "$PKG_MGR" luci-app-passwall2
 
     if [ "$DELETE_CONFIG" -eq 1 ]; then
-        log "删除 PassWall2 配置文件"
+        log "delete PassWall2 Configuration file"
         remove_paths /etc/config/passwall2
     else
-        warn "默认保留 /etc/config/passwall2 配置文件"
+        warn "Keep by default /etc/config/passwall2 Configuration file"
     fi
 
-    log "PassWall2 安全卸载完成"
+    log "PassWall2 Safe uninstall complete"
 }
 
 safe_uninstall_nikki() {
     PKG_MGR="$1"
-    log "开始安全卸载 Nikki（仅卸载主包）"
+    log "Start safe uninstallation Nikki(Only uninstall the main package)"
 
     stop_disable_service nikki
     remove_pkg_if_installed "$PKG_MGR" luci-i18n-nikki-zh-cn
@@ -163,18 +163,18 @@ safe_uninstall_nikki() {
     remove_pkg_if_installed "$PKG_MGR" mihomo-meta
 
     if [ "$DELETE_CONFIG" -eq 1 ]; then
-        log "删除 Nikki 配置文件"
+        log "delete Nikki Configuration file"
         remove_paths /etc/config/nikki
     else
-        warn "默认保留 /etc/config/nikki 配置文件"
+        warn "Keep by default /etc/config/nikki Configuration file"
     fi
 
-    log "Nikki 安全卸载完成"
+    log "Nikki Safe uninstall complete"
 }
 
 safe_uninstall_smartdns() {
     PKG_MGR="$1"
-    log "开始安全卸载 SmartDNS（仅卸载主包）"
+    log "Start safe uninstallation SmartDNS(Only uninstall the main package)"
 
     stop_disable_service smartdns
     remove_pkg_if_installed "$PKG_MGR" app-meta-smartdns
@@ -183,18 +183,18 @@ safe_uninstall_smartdns() {
     remove_pkg_if_installed "$PKG_MGR" smartdns
 
     if [ "$DELETE_CONFIG" -eq 1 ]; then
-        log "删除 SmartDNS 配置文件"
+        log "delete SmartDNS Configuration file"
         remove_paths /etc/config/smartdns
     else
-        warn "默认保留 /etc/config/smartdns 配置文件"
+        warn "Keep by default /etc/config/smartdns Configuration file"
     fi
 
-    log "SmartDNS 安全卸载完成"
+    log "SmartDNS Safe uninstall complete"
 }
 
 safe_uninstall_mosdns() {
     PKG_MGR="$1"
-    log "开始安全卸载 MosDNS（仅卸载主包）"
+    log "Start safe uninstallation MosDNS(Only uninstall the main package)"
 
     stop_disable_service mosdns
     remove_pkg_if_installed "$PKG_MGR" luci-i18n-mosdns-zh-cn
@@ -202,36 +202,36 @@ safe_uninstall_mosdns() {
     remove_pkg_if_installed "$PKG_MGR" mosdns
 
     if [ "$DELETE_CONFIG" -eq 1 ]; then
-        log "删除 MosDNS 配置文件"
+        log "delete MosDNS Configuration file"
         remove_paths /etc/config/mosdns /etc/mosdns
     else
-        warn "默认保留 /etc/config/mosdns 和 /etc/mosdns 配置文件"
+        warn "Keep by default /etc/config/mosdns and /etc/mosdns Configuration file"
     fi
 
-    log "MosDNS 安全卸载完成"
+    log "MosDNS Safe uninstall complete"
 }
 
 safe_uninstall_openclash() {
     PKG_MGR="$1"
-    log "开始安全卸载 OpenClash（仅卸载主包）"
+    log "Start safe uninstallation OpenClash(Only uninstall the main package)"
 
     stop_disable_service openclash
     remove_pkg_if_installed "$PKG_MGR" luci-app-openclash
     remove_openclash_core
 
     if [ "$DELETE_CONFIG" -eq 1 ]; then
-        log "删除 OpenClash 配置目录"
+        log "delete OpenClash Configuration directory"
         remove_paths /etc/config/openclash /etc/openclash
     else
-        warn "默认保留 /etc/openclash 配置目录，以避免误删订阅和配置"
+        warn "Keep by default /etc/openclash Configure directories to avoid accidentally deleting subscriptions and configurations"
     fi
 
-    log "OpenClash 安全卸载完成"
+    log "OpenClash Safe uninstall complete"
 }
 
 usage() {
     cat <<'EOF_USAGE'
-用法:
+usage:
   sh uninstall.sh passwall [--delete-config]
   sh uninstall.sh passwall2 [--delete-config]
   sh uninstall.sh nikki [--delete-config]
@@ -239,9 +239,9 @@ usage() {
   sh uninstall.sh mosdns [--delete-config]
   sh uninstall.sh openclash [--delete-config]
 
-说明:
-  默认执行安全卸载，只移除主包，不动共享依赖。
-  --delete-config 会额外删除对应插件的配置文件。
+illustrate:
+  By default, safe uninstallation is performed, only the main package is removed, and shared dependencies are left unchanged.
+  --delete-config The configuration file of the corresponding plug-in will be additionally deleted.
 EOF_USAGE
 }
 
@@ -262,7 +262,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                die "未知参数: $1"
+                die "unknown parameters: $1"
                 ;;
         esac
         shift
@@ -272,7 +272,7 @@ parse_args() {
 main() {
     parse_args "$@"
     PKG_MGR="$(detect_pkg_mgr)"
-    log "检测到包管理器: $PKG_MGR"
+    log "Package manager detected: $PKG_MGR"
 
     case "$TARGET" in
         passwall)
@@ -294,12 +294,12 @@ main() {
             safe_uninstall_openclash "$PKG_MGR"
             ;;
         *)
-            die "不支持的安全卸载目标: $TARGET"
+            die "Unsupported safe uninstall target: $TARGET"
             ;;
     esac
 
     refresh_web
-    log "安全卸载流程完成"
+    log "Safe uninstall process completed"
 }
 
 main "$@"

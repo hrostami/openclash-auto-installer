@@ -34,13 +34,13 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 refresh_luci() {
     rm -rf /tmp/luci-* /tmp/.luci* /tmp/etc/config/ucitrack /var/run/luci-indexcache 2>/dev/null || true
     if [ -x /etc/init.d/rpcd ]; then
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed"
     fi
 }
 
@@ -50,13 +50,13 @@ download_file() {
 
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL --retry 3 --connect-timeout 15 "$url" -o "$output" && return 0
-        warn "curl 下载失败（将尝试跳过证书验证重试）: $url"
+        warn "curl Download failed (will try again skipping certificate verification): $url"
         curl -kfsSL --retry 2 --connect-timeout 15 "$url" -o "$output" && return 0
     fi
 
     if command -v wget >/dev/null 2>&1; then
         wget -qO "$output" "$url" && return 0
-        warn "wget 下载失败（将尝试跳过证书验证重试）: $url"
+        warn "wget Download failed (will try again skipping certificate verification): $url"
         wget --no-check-certificate -qO "$output" "$url" && return 0
     fi
 
@@ -81,7 +81,7 @@ find_pkg_link() {
     ext="$3"
     link="$(printf '%s' "$page" | grep -o 'href="/projects/openwrt-passwall-build/files/[^"]*'"${pkg}"'[-_][^"]*\.'"${ext}"'[^"]*"' | sed 's|^href="||;s|"$||' | head -n1)"
     if [ -z "$link" ]; then
-        warn "在 SourceForge 页面中未找到包: $pkg"
+        warn "exist SourceForge Package not found in page: $pkg"
         return 1
     fi
     printf '%s\n' "$link"
@@ -93,7 +93,7 @@ download_pkg_from_dir() {
     ext="$3"
     sf_dir_url="${SF_BASE}/${PACKAGE_DIR}/${dir}/"
     page="$(fetch_text "$sf_dir_url")" || {
-        warn "无法获取目录页: $sf_dir_url"
+        warn "Unable to get directory page: $sf_dir_url"
         return 1
     }
     link="$(find_pkg_link "$page" "$pkg" "$ext")" || return 1
@@ -109,13 +109,13 @@ download_pkg_from_dir() {
     register_tmp "$output"
     download_url="https://sourceforge.net${link}/download"
 
-    log "下载: $filename" >&2
+    log "download: $filename" >&2
     download_file "$download_url" "$output" || {
-        warn "下载失败: $download_url"
+        warn "Download failed: $download_url"
         return 1
     }
     [ -s "$output" ] || {
-        warn "下载文件为空: $output"
+        warn "Download file is empty: $output"
         return 1
     }
     printf '%s\n' "$output"
@@ -167,7 +167,7 @@ download_pkg_from_github_release() {
     ext="$2"
     url="$(find_github_pkg_url "$pkg" "$ext")"
     [ -n "$url" ] || {
-        warn "GitHub release assets 中未找到包: $pkg"
+        warn "GitHub release assets Package not found in: $pkg"
         return 1
     }
 
@@ -175,13 +175,13 @@ download_pkg_from_github_release() {
     output="/tmp/$filename"
     register_tmp "$output"
 
-    log "下载: $filename" >&2
+    log "download: $filename" >&2
     download_file "$url" "$output" || download_file "https://gh-proxy.com/$url" "$output" || {
-            warn "下载失败: $url"
+            warn "Download failed: $url"
             return 1
         }
     [ -s "$output" ] || {
-        warn "下载文件为空: $output"
+        warn "Download file is empty: $output"
         return 1
     }
     printf '%s\n' "$output"
@@ -194,14 +194,14 @@ download_passwall_pkg() {
 
     if [ -n "${GH_RELEASE_JSON:-}${GH_RELEASE_ASSET_URLS:-}" ]; then
         download_pkg_from_github_release "$pkg" "$ext" && return 0
-        warn "GitHub release assets 下载失败，回退 SourceForge 目录。"
+        warn "GitHub release assets Download failed, rolled back SourceForge Table of contents."
     fi
 
     download_pkg_from_dir "$pkg" "$dir" "$ext"
 }
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-    die "已有另一个 PassWall 任务正在运行"
+    die "There is already another PassWall Task is running"
 fi
 
 if command -v opkg >/dev/null 2>&1; then
@@ -209,7 +209,7 @@ if command -v opkg >/dev/null 2>&1; then
 elif command -v apk >/dev/null 2>&1; then
     PKG_MGR="apk"
 else
-    die "未检测到 opkg 或 apk，当前系统暂不支持"
+    die "not detected opkg or apk, the current system does not support it yet"
 fi
 
 need_cmd "$PKG_MGR"
@@ -218,15 +218,15 @@ need_cmd grep
 need_cmd basename
 need_cmd mktemp
 
-[ -f /etc/openwrt_release ] || die "未检测到 /etc/openwrt_release"
+[ -f /etc/openwrt_release ] || die "not detected /etc/openwrt_release"
 # shellcheck disable=SC1091
 . /etc/openwrt_release
 
 ARCH="${DISTRIB_ARCH:-}"
 REL_RAW="${DISTRIB_RELEASE:-}"
 TARGET_NAME="${DISTRIB_TARGET:-}"
-[ -n "$ARCH" ] || die "无法识别系统架构"
-[ -n "$REL_RAW" ] || die "无法识别系统版本"
+[ -n "$ARCH" ] || die "Unable to identify system architecture"
+[ -n "$REL_RAW" ] || die "Unable to identify system version"
 
 normalize_release_for_passwall() {
     rel="$1"
@@ -242,7 +242,7 @@ normalize_release_for_passwall() {
 }
 
 SUPPORTED_RELEASE="$(normalize_release_for_passwall "$REL_RAW" "$PKG_MGR")"
-[ -n "$SUPPORTED_RELEASE" ] || die "当前系统版本 ${REL_RAW} / 包管理器 ${PKG_MGR} 暂未适配 PassWall 安装脚本。建议使用 OpenWrt 25.12+ apk，或 OpenWrt/iStoreOS/ImmortalWrt 22.03、23.05、24.10 opkg 系。"
+[ -n "$SUPPORTED_RELEASE" ] || die "Current system version ${REL_RAW} / Package manager ${PKG_MGR} Not adapted yet PassWall Install script. Recommended OpenWrt 25.12+ apk,or OpenWrt/iStoreOS/ImmortalWrt 22.03,23.05,24.10 opkg Tie."
 
 case "$SUPPORTED_RELEASE" in
     snapshots)
@@ -259,10 +259,10 @@ log "Package manager: $PKG_MGR"
 [ -n "$TARGET_NAME" ] && log "Target: $TARGET_NAME"
 log "Package dir: $PACKAGE_DIR"
 if [ "$SUPPORTED_RELEASE" != "$REL_RAW" ]; then
-    warn "当前系统版本 ${REL_RAW} 将按兼容目录 ${SUPPORTED_RELEASE} 匹配 PassWall 软件源。"
+    warn "Current system version ${REL_RAW} Will press the compatible directory ${SUPPORTED_RELEASE} match PassWall Software source."
 fi
 if [ "$PKG_MGR" = "apk" ]; then
-    warn "检测到 OpenWrt 25.12+ apk 环境，将尝试安装上游 .apk 包；若上游尚未发布当前架构构建，会明确失败。"
+    warn "detected OpenWrt 25.12+ apk environment, will try to install the upstream .apk package; will explicitly fail if upstream has not released the current architecture build."
 fi
 
 GH_RELEASE_JSON="$(fetch_text "$GH_API" 2>/dev/null || true)"
@@ -274,7 +274,7 @@ fi
 GH_RELEASE_ASSET_URLS=""
 if [ -z "$GH_RELEASE_JSON" ] && [ -n "$GH_LATEST" ]; then
     GH_RELEASE_ASSET_URLS="$(fetch_github_release_asset_urls_page "$GH_LATEST" 2>/dev/null || true)"
-    [ -n "$GH_RELEASE_ASSET_URLS" ] && log "GitHub release assets: 已通过网页兜底获取"
+    [ -n "$GH_RELEASE_ASSET_URLS" ] && log "GitHub release assets: Obtained through web page"
 fi
 
 case "$PKG_MGR" in
@@ -287,11 +287,11 @@ case "$PKG_MGR" in
         OLD_VER="$(apk info -a luci-app-passwall 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)"
         ;;
     *)
-        die "未知包管理器: $PKG_MGR"
+        die "Unknown package manager: $PKG_MGR"
         ;;
 esac
-log "当前已安装版本: ${OLD_VER:-not installed}"
-log "按接近手动 ${PKG_EXT} 的方式安装 / 更新 PassWall"
+log "Currently installed version: ${OLD_VER:-not installed}"
+log "Press close to manual ${PKG_EXT} Installed by / renew PassWall"
 
 install_lyaml_fallback() {
     case "$SUPPORTED_RELEASE" in
@@ -311,20 +311,20 @@ install_lyaml_fallback() {
         "https://mirrors.cernet.edu.cn/openwrt"
     do
         dep_base="${mirror}/${dep_path}"
-        log "软件源安装 lyaml 失败，尝试从 ${dep_base} 直接下载依赖 IPK"
+        log "Software source installation lyaml failed, try from ${dep_base} Download dependencies directly IPK"
         dir_page="$(fetch_text "${dep_base}/")" || {
-            warn "无法获取依赖目录: ${dep_base}/"
+            warn "Unable to obtain dependency directory: ${dep_base}/"
             continue
         }
 
         libyaml_name="$(printf '%s' "$dir_page" | grep -o "libyaml_[^\"'<>]*_${ARCH}\.ipk" | head -n1)"
         lyaml_name="$(printf '%s' "$dir_page" | grep -o "lyaml_[^\"'<>]*_${ARCH}\.ipk" | head -n1)"
         [ -n "$libyaml_name" ] || {
-            warn "未找到 libyaml IPK（架构: $ARCH）"
+            warn "not found libyaml IPK(Architecture: $ARCH)"
             continue
         }
         [ -n "$lyaml_name" ] || {
-            warn "未找到 lyaml IPK（架构: $ARCH）"
+            warn "not found lyaml IPK(Architecture: $ARCH)"
             continue
         }
 
@@ -333,9 +333,9 @@ install_lyaml_fallback() {
         register_tmp "$libyaml_ipk"
         register_tmp "$lyaml_ipk"
 
-        log "下载依赖: $libyaml_name"
+        log "Download dependencies: $libyaml_name"
         download_file "${dep_base}/${libyaml_name}" "$libyaml_ipk" || continue
-        log "下载依赖: $lyaml_name"
+        log "Download dependencies: $lyaml_name"
         download_file "${dep_base}/${lyaml_name}" "$lyaml_ipk" || continue
 
         opkg install "$libyaml_ipk" "$lyaml_ipk" && return 0
@@ -345,13 +345,13 @@ install_lyaml_fallback() {
 }
 
 if [ "$PKG_MGR" = "opkg" ] && ! opkg list-installed lyaml 2>/dev/null | grep -q '^lyaml -'; then
-    log "安装依赖: lyaml"
-    opkg update || warn "opkg update 失败，将继续尝试安装已缓存的软件源依赖"
-    opkg install lyaml || install_lyaml_fallback || die "安装依赖 lyaml 失败。请检查系统软件源是否启用 packages 源，或手动执行: opkg update && opkg install lyaml"
+    log "Install dependencies: lyaml"
+    opkg update || warn "opkg update If it fails, it will continue to try to install cached software source dependencies."
+    opkg install lyaml || install_lyaml_fallback || die "Install dependencies lyaml fail. Please check whether the system software source is enabled packages source, or execute manually: opkg update && opkg install lyaml"
 fi
 
-MAIN_PKG="$(download_passwall_pkg luci-app-passwall passwall_luci "$PKG_EXT")" || die "下载 luci-app-passwall ${PKG_EXT} 失败，请检查当前系统版本/架构是否存在对应构建，或稍后重试。"
-LANG_PKG="$(download_passwall_pkg luci-i18n-passwall-zh-cn passwall_luci "$PKG_EXT")" || die "下载 luci-i18n-passwall-zh-cn ${PKG_EXT} 失败，请稍后重试。"
+MAIN_PKG="$(download_passwall_pkg luci-app-passwall passwall_luci "$PKG_EXT")" || die "download luci-app-passwall ${PKG_EXT} Failed, please check the current system version/Check whether there is a corresponding build for the architecture, or try again later."
+LANG_PKG="$(download_passwall_pkg luci-i18n-passwall-zh-cn passwall_luci "$PKG_EXT")" || die "download luci-i18n-passwall-zh-cn ${PKG_EXT} Failed, please try again later."
 
 case "$PKG_MGR" in
     opkg)
@@ -362,7 +362,7 @@ case "$PKG_MGR" in
         ;;
     apk)
         INSTALL_OK=1
-        apk update || warn "apk update 失败，将继续尝试安装本地安装包"
+        apk update || warn "apk update Failure, will continue to try to install the local installation package"
         if apk add --allow-untrusted "$MAIN_PKG" "$LANG_PKG"; then
             INSTALL_OK=0
         fi
@@ -371,18 +371,18 @@ esac
 
 if [ "$INSTALL_OK" -ne 0 ]; then
     cat >&2 <<EOF
-[ERROR] PassWall 安装失败。
-可能原因：
-1. 当前固件版本与 PassWall 预编译包不匹配
-2. 当前架构缺少对应依赖包，或软件源中没有兼容构建
-3. 第三方固件重写了软件源，导致依赖解析异常
+[ERROR] PassWall Installation failed.
+Possible reasons:
+1. The current firmware version is the same as PassWall Precompiled package does not match
+2. The current architecture lacks corresponding dependency packages, or there is no compatible build in the software source.
+3. Third-party firmware rewrites the software source, causing dependency resolution exceptions
 
-建议排查：
-- OpenWrt 25.12+ / apk 环境请确认上游已发布对应 .apk 构建
-- opkg 环境确认系统版本优先使用 22.03 / 23.05 / 24.10 系
-- 执行 ${PKG_MGR} update 后重试
-- 检查系统软件源配置是否存在异常或重复源
-- 如为 iStoreOS 24.10 / 非标准固件，可优先使用 OpenClash，PassWall 兼容性取决于上游构建
+Suggested troubleshooting:
+- OpenWrt 25.12+ / apk For the environment, please confirm that the upstream has released the corresponding .apk build
+- opkg Environment confirmation system version is used first 22.03 / 23.05 / 24.10 Tie
+- implement ${PKG_MGR} update Try again later
+- Check whether there are any abnormalities or duplicate sources in the system software source configuration
+- If so iStoreOS 24.10 / Non-standard firmware can be used with priority OpenClash,PassWall Compatibility depends on upstream build
 EOF
     exit 1
 fi
@@ -391,9 +391,9 @@ case "$PKG_MGR" in
     opkg) NEW_VER="$(opkg status luci-app-passwall 2>/dev/null | sed -n 's/^Version: //p' | head -n1 || true)" ;;
     apk) NEW_VER="$(apk info -a luci-app-passwall 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)" ;;
 esac
-log "安装后版本: ${NEW_VER:-unknown}"
+log "Post-installation version: ${NEW_VER:-unknown}"
 
 refresh_luci
-warn "默认不主动修改 /etc/config/passwall；如界面初次显示异常，可手动刷新页面或重新登录 LuCI"
-warn "如界面初次显示为英文，请刷新页面，中文语言包会自动生效"
-log "PassWall 处理完成"
+warn "Not actively modified by default /etc/config/passwall; If the interface displays abnormally for the first time, you can manually refresh the page or log in again. LuCI"
+warn "If the interface is displayed in English for the first time, please refresh the page and the Chinese language pack will automatically take effect."
+log "PassWall Processing completed"

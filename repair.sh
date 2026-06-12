@@ -20,7 +20,7 @@ detect_pkg_mgr() {
     elif command -v apk >/dev/null 2>&1; then
         printf 'apk'
     else
-        die "未检测到 opkg 或 apk，当前系统暂不支持"
+        die "not detected opkg or apk, the current system does not support it yet"
     fi
 }
 
@@ -30,22 +30,22 @@ ensure_dir() {
 
 fix_core_permissions() {
     if [ -f /etc/openclash/core/clash_meta ]; then
-        chmod 0755 /etc/openclash/core/clash_meta || warn "修复 clash_meta 权限失败"
-        log "已检查并修复 clash_meta 权限"
+        chmod 0755 /etc/openclash/core/clash_meta || warn "repair clash_meta Permission failed"
+        log "Checked and fixed clash_meta Permissions"
     else
-        warn "未发现 /etc/openclash/core/clash_meta"
+        warn "not found /etc/openclash/core/clash_meta"
     fi
 }
 
 restart_services() {
     if [ -x /etc/init.d/openclash ]; then
-        /etc/init.d/openclash restart >/dev/null 2>&1 || warn "OpenClash 服务重启失败"
-        log "已尝试重启 OpenClash"
+        /etc/init.d/openclash restart >/dev/null 2>&1 || warn "OpenClash Service restart failed"
+        log "Tried restarting OpenClash"
     fi
 
     if [ -x /etc/init.d/uhttpd ]; then
-        /etc/init.d/uhttpd restart >/dev/null 2>&1 || warn "uhttpd 重启失败"
-        log "已尝试重启 uhttpd"
+        /etc/init.d/uhttpd restart >/dev/null 2>&1 || warn "uhttpd Restart failed"
+        log "Tried restarting uhttpd"
     fi
 }
 
@@ -53,24 +53,24 @@ refresh_index() {
     PKG_MGR="$1"
     case "$PKG_MGR" in
         opkg)
-            log "刷新 opkg 软件源"
-            opkg update || warn "opkg update 失败"
+            log "refresh opkg Software source"
+            opkg update || warn "opkg update fail"
             ;;
         apk)
-            log "刷新 apk 软件源"
-            apk update || warn "apk update 失败"
+            log "refresh apk Software source"
+            apk update || warn "apk update fail"
             ;;
     esac
 }
 
 show_status() {
     PKG_MGR="$1"
-    log "系统包管理器: $PKG_MGR"
+    log "System package manager: $PKG_MGR"
 
     if [ -f /etc/openclash/core/clash_meta ]; then
-        log "检测到 Meta 内核: /etc/openclash/core/clash_meta"
+        log "detected Meta Kernel: /etc/openclash/core/clash_meta"
     else
-        warn "未检测到 Meta 内核文件"
+        warn "not detected Meta kernel file"
     fi
 
     if [ "$PKG_MGR" = "opkg" ]; then
@@ -79,13 +79,13 @@ show_status() {
         VER="$(apk info -a luci-app-openclash 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)"
     fi
 
-    log "当前 OpenClash 版本: ${VER:-unknown or not installed}"
+    log "current OpenClash Version: ${VER:-unknown or not installed}"
 }
 
 main() {
     PKG_MGR="$(detect_pkg_mgr)"
 
-    log "开始执行 OpenClash 修复流程"
+    log "Start execution OpenClash Repair process"
     ensure_dir /etc/openclash
     ensure_dir /etc/openclash/core
 
@@ -94,7 +94,7 @@ main() {
     restart_services
     show_status "$PKG_MGR"
 
-    log "修复流程完成"
+    log "Repair process completed"
 }
 
 main "$@"

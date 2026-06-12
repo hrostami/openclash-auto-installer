@@ -30,18 +30,18 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 usage() {
     cat <<'EOF_USAGE'
-用法:
-  sh mosdns.sh [选项]
+usage:
+  sh mosdns.sh [Options]
 
-选项:
-  --skip-restart      完成后不尝试启用 / 重启 mosdns
-  --skip-pkg-update   跳过 opkg update / apk update
-  -h, --help          显示帮助
+Options:
+  --skip-restart      Don't try to enable when done / Restart mosdns
+  --skip-pkg-update   jump over opkg update / apk update
+  -h, --help          show help
 EOF_USAGE
 }
 
@@ -59,7 +59,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                die "未知参数: $1"
+                die "unknown parameters: $1"
                 ;;
         esac
         shift
@@ -72,7 +72,7 @@ detect_pkg_mgr() {
     elif command -v apk >/dev/null 2>&1; then
         printf 'apk'
     else
-        die "未检测到 opkg 或 apk，当前系统暂不支持"
+        die "not detected opkg or apk, the current system does not support it yet"
     fi
 }
 
@@ -96,7 +96,7 @@ select_sdk() {
             printf 'openwrt-24.10'
             ;;
         *)
-            die "未知包管理器: $PKG_MGR"
+            die "Unknown package manager: $PKG_MGR"
             ;;
     esac
 }
@@ -112,7 +112,7 @@ download_url() {
     elif command -v wget >/dev/null 2>&1; then
         wget -qO "$OUT" --user-agent="openclaw-openwrt-installer" "$URL"
     else
-        die "缺少 curl 或 wget，无法下载文件"
+        die "Lack curl or wget, unable to download file"
     fi
 }
 
@@ -133,7 +133,7 @@ download_github_api() {
             --header="X-GitHub-Api-Version: 2022-11-28" \
             "$URL"
     else
-        die "缺少 curl 或 wget，无法下载文件"
+        die "Lack curl or wget, unable to download file"
     fi
 }
 
@@ -167,12 +167,12 @@ fetch_release_meta() {
         return 0
     fi
 
-    warn "GitHub API 获取 MosDNS Release 信息失败，改用 releases 页面兜底"
-    download_url "$MOSDNS_RELEASE_URL" "$TMP_ROOT/release.html" || die "获取 MosDNS 最新 Release 信息失败"
+    warn "GitHub API Get MosDNS Release Information failed, use instead releases Page details"
+    download_url "$MOSDNS_RELEASE_URL" "$TMP_ROOT/release.html" || die "Get MosDNS up to date Release Message failed"
 
     RELEASE_TAG="$(sed -n 's|.*href="/'"$MOSDNS_REPO"'/releases/tag/\([^"/?#]*\)".*|\1|p' "$TMP_ROOT/release.html" | head -n1 || true)"
     if [ -n "$RELEASE_TAG" ]; then
-        download_url "https://github.com/$MOSDNS_REPO/releases/expanded_assets/$RELEASE_TAG" "$TMP_ROOT/release-assets.html" || warn "获取 MosDNS Release 资产列表失败"
+        download_url "https://github.com/$MOSDNS_REPO/releases/expanded_assets/$RELEASE_TAG" "$TMP_ROOT/release-assets.html" || warn "Get MosDNS Release Asset list failed"
     fi
 }
 
@@ -191,32 +191,32 @@ get_installed_version() {
 maybe_update_index() {
     PKG_MGR="$1"
     if [ "$FORCE_PKG_UPDATE" != "1" ]; then
-        log "按参数跳过软件源更新"
+        log "Skip software source updates by parameter"
         return 0
     fi
 
     case "$PKG_MGR" in
         opkg)
-            log "刷新 opkg 软件源索引"
-            opkg update || warn "opkg update 失败，将继续尝试安装 GitHub Release 包"
+            log "refresh opkg Software source index"
+            opkg update || warn "opkg update Failure, will continue to try to install GitHub Release Bag"
             ;;
         apk)
-            log "刷新 apk 软件源索引"
-            apk update || warn "apk update 失败，将继续尝试安装 GitHub Release 包"
+            log "refresh apk Software source index"
+            apk update || warn "apk update Failure, will continue to try to install GitHub Release Bag"
             ;;
     esac
 }
 
 check_runtime() {
-    [ -f /etc/openwrt_release ] || die "未检测到 /etc/openwrt_release，当前环境不像 OpenWrt"
-    [ -d /usr/share/luci/menu.d ] || die "当前 LuCI 版本可能过旧，未发现 /usr/share/luci/menu.d"
+    [ -f /etc/openwrt_release ] || die "not detected /etc/openwrt_release, the current environment is not like OpenWrt"
+    [ -d /usr/share/luci/menu.d ] || die "current LuCI The version may be too old and not found /usr/share/luci/menu.d"
 
     ROOT_SPACE="$(df -m /usr | awk 'END{print $4}' 2>/dev/null || printf 0)"
     case "$ROOT_SPACE" in
         ''|*[!0-9]*) ROOT_SPACE=0 ;;
     esac
     if [ "$ROOT_SPACE" -lt 35 ]; then
-        die "系统 /usr 可用空间小于 35MB，不建议继续安装 MosDNS"
+        die "system /usr Available space is less than 35MB, it is not recommended to continue the installation MosDNS"
     fi
 }
 
@@ -228,20 +228,20 @@ install_release_archive() {
 
     fetch_release_meta
     ASSET_URL="$(find_asset_url "$ASSET_NAME")"
-    [ -n "$ASSET_URL" ] || die "未找到当前架构的 MosDNS Release 包: $ASSET_NAME"
+    [ -n "$ASSET_URL" ] || die "Not found for current architecture MosDNS Release Bag: $ASSET_NAME"
 
     ARCHIVE="$TMP_ROOT/$ASSET_NAME"
     EXTRACT_DIR="$TMP_ROOT/extract"
     mkdir -p "$EXTRACT_DIR"
 
-    log "下载 MosDNS Release 包: $ASSET_NAME"
-    download_url "$ASSET_URL" "$ARCHIVE" || die "下载 MosDNS Release 包失败"
+    log "download MosDNS Release Bag: $ASSET_NAME"
+    download_url "$ASSET_URL" "$ARCHIVE" || die "download MosDNS Release Package failed"
 
-    log "解压 MosDNS Release 包"
-    tar -zxf "$ARCHIVE" -C "$EXTRACT_DIR" || die "解压 MosDNS Release 包失败"
+    log "Unzip MosDNS Release Bag"
+    tar -zxf "$ARCHIVE" -C "$EXTRACT_DIR" || die "Unzip MosDNS Release Package failed"
 
     if [ -x /etc/init.d/mosdns ]; then
-        log "停止 MosDNS 服务"
+        log "stop MosDNS Serve"
         /etc/init.d/mosdns stop >/dev/null 2>&1 || true
     fi
 
@@ -254,7 +254,7 @@ install_release_archive() {
             ;;
     esac
 
-    log "安装 / 更新 MosDNS 相关包"
+    log "Install / renew MosDNS Related packages"
     for pkg in \
         "$EXTRACT_DIR"/packages_ci/v2dat*.* \
         "$EXTRACT_DIR"/packages_ci/v2ray-geoip*.* \
@@ -264,28 +264,28 @@ install_release_archive() {
         "$EXTRACT_DIR"/packages_ci/luci-i18n-mosdns-zh-cn*.*; do
         [ -f "$pkg" ] || continue
         # shellcheck disable=SC2086
-        $INSTALL_CMD "$pkg" || die "安装失败: $(basename "$pkg")"
+        $INSTALL_CMD "$pkg" || die "Installation failed: $(basename "$pkg")"
     done
 }
 
 refresh_luci() {
     rm -rf /tmp/luci-* /tmp/.luci* /tmp/etc/config/ucitrack /var/run/luci-indexcache 2>/dev/null || true
     if [ -x /etc/init.d/rpcd ]; then
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed"
     fi
 }
 
 restart_mosdns() {
     if [ "$RESTART_SERVICES" != "1" ]; then
-        log "按参数跳过 mosdns 启用 / 重启"
+        log "Skip by parameter mosdns enable / Restart"
         return 0
     fi
 
     if [ -x /etc/init.d/mosdns ]; then
-        /etc/init.d/mosdns enable >/dev/null 2>&1 || warn "mosdns enable 失败"
-        /etc/init.d/mosdns restart >/dev/null 2>&1 || warn "mosdns restart 失败"
+        /etc/init.d/mosdns enable >/dev/null 2>&1 || warn "mosdns enable fail"
+        /etc/init.d/mosdns restart >/dev/null 2>&1 || warn "mosdns restart fail"
     else
-        warn "未发现 /etc/init.d/mosdns，跳过服务重启"
+        warn "not found /etc/init.d/mosdns, skip service restart"
     fi
 }
 
@@ -293,7 +293,7 @@ main() {
     parse_args "$@"
 
     if ! mkdir "$LOCKDIR" 2>/dev/null; then
-        die "已有另一个 MosDNS 任务正在运行"
+        die "There is already another MosDNS Task is running"
     fi
     mkdir -p "$TMP_ROOT"
 
@@ -309,14 +309,14 @@ main() {
 
     PKG_MGR="$(detect_pkg_mgr)"
     DISTR_ARCH="$(get_distr_arch)"
-    [ -n "$DISTR_ARCH" ] || die "无法读取 DISTRIB_ARCH，暂不支持当前系统"
+    [ -n "$DISTR_ARCH" ] || die "Unable to read DISTRIB_ARCH, currently does not support the current system"
     SDK="$(select_sdk "$PKG_MGR")"
 
-    log "检测到包管理器: $PKG_MGR"
-    log "检测到 MosDNS 架构: $DISTR_ARCH"
-    log "使用构建版本: $SDK"
+    log "Package manager detected: $PKG_MGR"
+    log "detected MosDNS Architecture: $DISTR_ARCH"
+    log "Use build version: $SDK"
     OLD_VER="$(get_installed_version "$PKG_MGR")"
-    log "当前已安装版本: ${OLD_VER:-not installed}"
+    log "Currently installed version: ${OLD_VER:-not installed}"
 
     maybe_update_index "$PKG_MGR"
     install_release_archive "$PKG_MGR" "$DISTR_ARCH" "$SDK"
@@ -324,10 +324,10 @@ main() {
     refresh_luci
 
     NEW_VER="$(get_installed_version "$PKG_MGR")"
-    log "安装后版本: ${NEW_VER:-unknown}"
-    warn "默认不主动改写 /etc/config/mosdns；请在 LuCI 中按你的网络环境启用或调整 DNS 分流设置"
-    warn "如果 LuCI 菜单未立即出现，请刷新页面或重新登录 LuCI"
-    log "MosDNS 处理完成"
+    log "Post-installation version: ${NEW_VER:-unknown}"
+    warn "Not actively rewritten by default /etc/config/mosdns;please LuCI Click on your network environment to enable or adjust DNS Offload settings"
+    warn "if LuCI The menu does not appear immediately, please refresh the page or log in again LuCI"
+    log "MosDNS Processing completed"
 }
 
 main "$@"

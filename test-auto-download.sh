@@ -19,11 +19,11 @@ die() {
 }
 
 if [ -f "./passwall.sh" ]; then
-    log "test-auto-download.sh 已合并到 passwall.sh，转交给本地 passwall.sh"
+    log "test-auto-download.sh Merged into passwall.sh, transferred to the local passwall.sh"
     exec sh ./passwall.sh "$@"
 fi
 
-command -v curl >/dev/null 2>&1 || die "缺少 curl 命令，无法下载 passwall.sh"
-log "test-auto-download.sh 已合并到 passwall.sh，下载最新 passwall.sh"
-curl -fsSL --retry 3 "https://raw.githubusercontent.com/$REPO/$BRANCH/passwall.sh" -o "$TMP_SCRIPT" || die "下载 passwall.sh 失败"
+command -v curl >/dev/null 2>&1 || die "Lack curl command, unable to download passwall.sh"
+log "test-auto-download.sh Merged into passwall.sh, download the latest passwall.sh"
+curl -fsSL --retry 3 "https://raw.githubusercontent.com/$REPO/$BRANCH/passwall.sh" -o "$TMP_SCRIPT" || die "download passwall.sh fail"
 exec sh "$TMP_SCRIPT" "$@"

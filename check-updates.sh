@@ -27,14 +27,14 @@ warn() {
 
 need_cmd() {
     command -v "$1" >/dev/null 2>&1 || {
-        printf '%s\n' "[ERROR] 缺少命令: $1" >&2
+        printf '%s\n' "[ERROR] Missing command: $1" >&2
         exit 1
     }
 }
 
 usage() {
     cat <<'EOF_USAGE'
-用法:
+usage:
   sh check-updates.sh
   sh check-updates.sh --all
   sh check-updates.sh --openclash
@@ -44,8 +44,8 @@ usage() {
   sh check-updates.sh --smartdns
   sh check-updates.sh --mosdns
 
-说明:
-  默认检查全部插件
+illustrate:
+  Check all plugins by default
 EOF_USAGE
 }
 
@@ -78,7 +78,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                printf '%s\n' "[ERROR] 未知参数: $1" >&2
+                printf '%s\n' "[ERROR] unknown parameters: $1" >&2
                 exit 1
                 ;;
         esac
@@ -150,21 +150,21 @@ print_result() {
 
     printf '%s\n' ""
     printf '%s\n' "[$NAME]"
-    printf '  当前版本: %s\n' "${INSTALLED:-not installed}"
-    printf '  最新版本: %s\n' "${LATEST:-unknown}"
+    printf '  Current version: %s\n' "${INSTALLED:-not installed}"
+    printf '  latest version: %s\n' "${LATEST:-unknown}"
 
     if [ -z "${LATEST:-}" ]; then
-        printf '%s\n' "  状态: 无法获取最新版本"
+        printf '%s\n' "  state: Unable to get latest version"
         return 0
     fi
 
     if [ -z "${INSTALLED:-}" ]; then
-        printf '%s\n' "  状态: 未安装"
+        printf '%s\n' "  state: Not installed"
         return 0
     fi
 
     if [ "$INSTALLED" = "installed" ]; then
-        printf '%s\n' "  状态: 已安装，无法比较版本"
+        printf '%s\n' "  state: Already installed, unable to compare versions"
         return 0
     fi
 
@@ -172,9 +172,9 @@ print_result() {
     LATEST_NORM="$(normalize_version "$LATEST")"
 
     if [ "$INSTALLED_NORM" = "$LATEST_NORM" ]; then
-        printf '%s\n' "  状态: 已是最新"
+        printf '%s\n' "  state: Already the latest"
     else
-        printf '%s\n' "  状态: 有新版本可更新"
+        printf '%s\n' "  state: There is a new version to update"
     fi
 }
 
@@ -186,15 +186,15 @@ print_result_no_compare() {
 
     printf '%s\n' ""
     printf '%s\n' "[$NAME]"
-    printf '  当前版本: %s\n' "${INSTALLED:-not installed}"
-    printf '  最新版本: %s\n' "${LATEST:-unknown}"
+    printf '  Current version: %s\n' "${INSTALLED:-not installed}"
+    printf '  latest version: %s\n' "${LATEST:-unknown}"
 
     if [ -z "${INSTALLED:-}" ]; then
-        printf '%s\n' "  状态: 未安装"
+        printf '%s\n' "  state: Not installed"
     else
-        printf '%s\n' "  状态: 已安装，版本仅供参考"
+        printf '%s\n' "  state: Already installed, version is for reference only"
     fi
-    [ -z "${NOTE:-}" ] || printf '  说明: %s\n' "$NOTE"
+    [ -z "${NOTE:-}" ] || printf '  illustrate: %s\n' "$NOTE"
 }
 
 get_installed_opkg_version() {
@@ -263,7 +263,7 @@ check_smartdns() {
     fi
 
     LATEST="$(fetch_latest_tag_jsonfilter smartdns "$SMARTDNS_API" || true)"
-    print_result_no_compare "SmartDNS" "$INSTALLED" "$LATEST" "SmartDNS 软件包版本与 GitHub Release 标签不是同一套版本号，不直接判断是否可更新"
+    print_result_no_compare "SmartDNS" "$INSTALLED" "$LATEST" "SmartDNS Package version vs. GitHub Release The labels are not the same set of version numbers, and it is not directly determined whether they can be updated."
 }
 
 check_mosdns() {
@@ -288,7 +288,7 @@ check_nikki() {
     LATEST="$(fetch_latest_tag_jsonfilter nikki "$NIKKI_REPO_API" || true)"
     print_result "Nikki" "$INSTALLED" "$LATEST"
     if [ -z "${LATEST:-}" ]; then
-        printf '%s\n' "  说明: Nikki 官方安装方式更偏 feed/脚本，GitHub Release 可能不是唯一更新来源"
+        printf '%s\n' "  illustrate: Nikki The official installation method is more biased feed/script,GitHub Release May not be the only source of updates"
     fi
 }
 
@@ -298,7 +298,7 @@ main() {
     need_cmd sed
     need_cmd head
     if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
-        printf '%s\n' "[ERROR] 缺少 curl 或 wget，无法联网检查更新" >&2
+        printf '%s\n' "[ERROR] Lack curl or wget, unable to check for updates online" >&2
         exit 1
     fi
 
@@ -307,12 +307,12 @@ main() {
     elif command -v apk >/dev/null 2>&1; then
         PKG_MGR="apk"
     else
-        printf '%s\n' "[ERROR] 未检测到 opkg 或 apk" >&2
+        printf '%s\n' "[ERROR] not detected opkg or apk" >&2
         exit 1
     fi
 
-    log "开始检查插件更新状态"
-    log "检测到包管理器: $PKG_MGR"
+    log "Start checking plugin update status"
+    log "Package manager detected: $PKG_MGR"
 
     case "$TARGET" in
         all)
@@ -344,7 +344,7 @@ main() {
     esac
 
     printf '%s\n' ""
-    log "检查完成：本脚本仅检测，不会执行更新"
+    log "Check completed: This script only detects and will not perform updates."
 }
 
 main "$@"

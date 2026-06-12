@@ -26,7 +26,7 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 detect_firewall_stack() {
@@ -40,7 +40,7 @@ detect_firewall_stack() {
 refresh_luci() {
     rm -rf /tmp/luci-* /tmp/.luci* /tmp/etc/config/ucitrack /var/run/luci-indexcache 2>/dev/null || true
     if [ -x /etc/init.d/rpcd ]; then
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed"
     fi
 }
 
@@ -55,17 +55,17 @@ detect_nikki_branch() {
 
 add_nikki_apk_feed() {
     branch="$(detect_nikki_branch)"
-    [ -n "$branch" ] || die "当前系统版本 ${REL_RAW:-unknown} 暂未被 Nikki 官方 feed 支持"
+    [ -n "$branch" ] || die "Current system version ${REL_RAW:-unknown} Not yet Nikki official feed support"
 
     arch="${DISTRIB_ARCH:-}"
-    [ -n "$arch" ] || die "无法识别系统架构"
+    [ -n "$arch" ] || die "Unable to identify system architecture"
 
     FEED_URL="$NIKKI_REPO_URL/$branch/$arch/nikki"
     feed_list="/etc/apk/repositories.d/customfeeds.list"
 
-    log "导入 Nikki apk feed: $FEED_URL"
+    log "import Nikki apk feed: $FEED_URL"
     mkdir -p /etc/apk/keys /etc/apk/repositories.d
-    wget -qO /etc/apk/keys/nikki.pem "$NIKKI_REPO_URL/public-key.pem" || die "下载 Nikki apk 公钥失败"
+    wget -qO /etc/apk/keys/nikki.pem "$NIKKI_REPO_URL/public-key.pem" || die "download Nikki apk Public key failed"
 
     if [ -f "$feed_list" ] && grep -q nikki "$feed_list"; then
         sed -i '/nikki/d' "$feed_list"
@@ -74,10 +74,10 @@ add_nikki_apk_feed() {
 }
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-    die "已有另一个 Nikki 任务正在运行"
+    die "There is already another Nikki Task is running"
 fi
 
-[ -f /etc/openwrt_release ] || die "未检测到 /etc/openwrt_release"
+[ -f /etc/openwrt_release ] || die "not detected /etc/openwrt_release"
 # shellcheck disable=SC1091
 . /etc/openwrt_release
 
@@ -91,53 +91,53 @@ if command -v opkg >/dev/null 2>&1; then
 elif command -v apk >/dev/null 2>&1; then
     PKG_MGR="apk"
 else
-    die "未检测到 opkg 或 apk"
+    die "not detected opkg or apk"
 fi
 
-log "检测到包管理器: $PKG_MGR"
+log "Package manager detected: $PKG_MGR"
 FIREWALL_STACK="$(detect_firewall_stack)"
-log "检测到防火墙栈: $FIREWALL_STACK"
+log "Firewall stack detected: $FIREWALL_STACK"
 if [ "$FIREWALL_STACK" = "iptables" ]; then
     cat >&2 <<EOF
-[ERROR] Nikki 仅支持 firewall4（nftables）环境。
-当前系统防火墙栈为 iptables，因此无法直接安装 Nikki。
+[ERROR] Nikki Only supports firewall4(nftables)environment.
+The current system firewall stack is iptables, so it cannot be installed directly Nikki.
 
-建议处理方式：
-- 切换到使用 firewall4 的 OpenWrt / ImmortalWrt / iStoreOS 固件
-- 或改用 OpenClash / PassWall / PassWall2
+Suggested handling:
+- Switch to using firewall4 of OpenWrt / ImmortalWrt / iStoreOS firmware
+- or use instead OpenClash / PassWall / PassWall2
 EOF
     exit 1
 fi
 if [ "$PKG_MGR" = "apk" ]; then
-    warn "当前包管理器为 apk（OpenWrt 25.12+），Nikki 可能尚未完全适配。"
+    warn "The current package manager is apk(OpenWrt 25.12+),Nikki May not be fully adapted yet."
 fi
 
 case "$PKG_MGR" in
     opkg)
         OLD_VER="$(opkg status luci-app-nikki 2>/dev/null | sed -n 's/^Version: //p' | head -n1 || true)"
-        log "当前已安装版本: ${OLD_VER:-not installed}"
-        log "按官方方式导入 Nikki feed"
-        wget -qO- "$FEED_SCRIPT_URL" | sh || die "执行 Nikki feed.sh 失败"
-        log "按官方方式安装 / 更新 Nikki"
-        wget -qO- "$INSTALL_SCRIPT_URL" | sh || die "执行 Nikki 官方 install.sh 失败"
-        opkg install luci-i18n-nikki-zh-cn || warn "安装 Nikki 中文语言包失败"
+        log "Currently installed version: ${OLD_VER:-not installed}"
+        log "Import according to official method Nikki feed"
+        wget -qO- "$FEED_SCRIPT_URL" | sh || die "implement Nikki feed.sh fail"
+        log "Install according to the official method / renew Nikki"
+        wget -qO- "$INSTALL_SCRIPT_URL" | sh || die "implement Nikki official install.sh fail"
+        opkg install luci-i18n-nikki-zh-cn || warn "Install Nikki Chinese language pack failed"
         NEW_VER="$(opkg status luci-app-nikki 2>/dev/null | sed -n 's/^Version: //p' | head -n1 || true)"
         ;;
     apk)
         OLD_VER="$(apk info -a luci-app-nikki 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)"
-        log "当前已安装版本: ${OLD_VER:-not installed}"
+        log "Currently installed version: ${OLD_VER:-not installed}"
         add_nikki_apk_feed
-        log "刷新软件源"
-        apk update || die "apk update 失败，请检查 Nikki feed 或网络连接"
-        log "按 Nikki 官方 apk feed 安装 / 更新 Nikki"
-        apk add --allow-untrusted -X "$FEED_URL/packages.adb" mihomo-meta nikki luci-app-nikki || die "安装 Nikki apk 包失败，请检查当前架构是否存在 Nikki 官方构建"
-        apk add --allow-untrusted -X "$FEED_URL/packages.adb" luci-i18n-nikki-zh-cn || warn "安装 Nikki 中文语言包失败"
+        log "Refresh software source"
+        apk update || die "apk update Failed, please check Nikki feed or network connection"
+        log "according to Nikki official apk feed Install / renew Nikki"
+        apk add --allow-untrusted -X "$FEED_URL/packages.adb" mihomo-meta nikki luci-app-nikki || die "Install Nikki apk Package failed, please check if the current schema exists Nikki Official build"
+        apk add --allow-untrusted -X "$FEED_URL/packages.adb" luci-i18n-nikki-zh-cn || warn "Install Nikki Chinese language pack failed"
         NEW_VER="$(apk info -a luci-app-nikki 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)"
         ;;
 esac
 
-log "安装后版本: ${NEW_VER:-unknown}"
+log "Post-installation version: ${NEW_VER:-unknown}"
 refresh_luci
-warn "默认不主动改写 Nikki 配置；如界面初次显示异常，可手动刷新页面或重新登录 LuCI"
-warn "如界面初次显示为英文，请刷新页面，中文语言包会自动生效"
-log "Nikki 处理完成"
+warn "Not actively rewritten by default Nikki Configuration; if the interface displays abnormally for the first time, you can manually refresh the page or log in again. LuCI"
+warn "If the interface is displayed in English for the first time, please refresh the page and the Chinese language pack will automatically take effect."
+log "Nikki Processing completed"

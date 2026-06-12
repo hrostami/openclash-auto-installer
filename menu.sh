@@ -18,12 +18,12 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 usage() {
     cat <<'EOF_USAGE'
-用法:
+usage:
   sh menu.sh
   sh menu.sh --check-all-updates
   sh menu.sh --check-updates
@@ -51,9 +51,9 @@ usage() {
   sh menu.sh --uninstall-mosdns
   sh menu.sh --uninstall-openclash
 
-说明:
-  不带参数时进入交互菜单
-  带参数时直接执行对应动作，适合非交互环境
+illustrate:
+  Enter the interactive menu without parameters
+  When parameters are taken, the corresponding action is executed directly, which is suitable for non-interactive environments.
 EOF_USAGE
 }
 
@@ -140,7 +140,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                die "未知参数: $1"
+                die "unknown parameters: $1"
                 ;;
         esac
         shift
@@ -167,79 +167,79 @@ download_and_run() {
     SCRIPT_NAME="$1"
     shift || true
     
-    # 优先使用本地智能版本
+    # Prefer local smart version
     if [ -f "scripts/$SCRIPT_NAME" ]; then
-        log "使用本地智能版本: scripts/$SCRIPT_NAME"
+        log "Use local smart version: scripts/$SCRIPT_NAME"
         sh "scripts/$SCRIPT_NAME" "$@"
         return
     elif [ -f "$SCRIPT_NAME-smart.sh" ]; then
-        log "使用本地智能版本: $SCRIPT_NAME-smart.sh"
+        log "Use local smart version: $SCRIPT_NAME-smart.sh"
         sh "$SCRIPT_NAME-smart.sh" "$@"
         return
     fi
     
     URL="$(resolve_base_url)/$SCRIPT_NAME"
 
-    log "下载脚本: $URL"
-    curl -fsSL --retry 3 "$URL" -o "$TMP_SCRIPT" || die "下载脚本失败: $SCRIPT_NAME"
+    log "Download script: $URL"
+    curl -fsSL --retry 3 "$URL" -o "$TMP_SCRIPT" || die "Download script failed: $SCRIPT_NAME"
     chmod +x "$TMP_SCRIPT"
     sh "$TMP_SCRIPT" "$@"
 }
 
 show_menu() {
     cat <<'EOF_MENU'
-================ 代理插件管理菜单 ================
-1. 检查插件更新
-2. 安装插件
-3. 卸载插件
-0. 退出
+================ Agent plugin management menu ================
+1. Check for plugin updates
+2. Install plugin
+3. Uninstall plugin
+0. quit
 ==================================================
 EOF_MENU
 }
 
 show_install_menu() {
     cat <<'EOF_INSTALL_MENU'
-================ 安装插件 ================
-1. 安装 / 更新 OpenClash（自动识别 Meta / Smart）
-2. 只更新 OpenClash 插件
-3. 只安装 OpenClash 核心（自动识别 Meta / Smart）
-4. 只安装 OpenClash 普通 Meta 内核
-5. 只安装 OpenClash Smart Meta 内核
-6. 安装 / 更新 PassWall
-7. 安装 / 更新 PassWall2
-8. 安装 / 更新 Nikki
-9. 安装 / 更新 SmartDNS
-10. 安装 / 更新 MosDNS
-0. 返回上一级
+================ Install plugin ================
+1. Install / renew OpenClash(Automatic recognition Meta / Smart)
+2. Update only OpenClash plug-in
+3. Install only OpenClash core (auto-recognition Meta / Smart)
+4. Install only OpenClash ordinary Meta Kernel
+5. Install only OpenClash Smart Meta Kernel
+6. Install / renew PassWall
+7. Install / renew PassWall2
+8. Install / renew Nikki
+9. Install / renew SmartDNS
+10. Install / renew MosDNS
+0. Return to previous level
 ==========================================
 EOF_INSTALL_MENU
 }
 
 show_uninstall_menu() {
     cat <<'EOF_UNINSTALL_MENU'
-================ 卸载插件 ================
-1. 卸载 PassWall
-2. 卸载 PassWall2
-3. 卸载 Nikki
-4. 卸载 SmartDNS
-5. 卸载 MosDNS
-6. 卸载 OpenClash
-0. 返回上一级
+================ Uninstall plugin ================
+1. uninstall PassWall
+2. uninstall PassWall2
+3. uninstall Nikki
+4. uninstall SmartDNS
+5. uninstall MosDNS
+6. uninstall OpenClash
+0. Return to previous level
 ==========================================
 EOF_UNINSTALL_MENU
 }
 
 show_check_update_menu() {
     cat <<'EOF_CHECK_MENU'
-================ 检查插件更新 ================
-1. 检查所有插件
-2. 检查 OpenClash
-3. 检查 PassWall
-4. 检查 PassWall2
-5. 检查 Nikki
-6. 检查 SmartDNS
-7. 检查 MosDNS
-0. 返回上一级
+================ Check for plugin updates ================
+1. Check all plugins
+2. examine OpenClash
+3. examine PassWall
+4. examine PassWall2
+5. examine Nikki
+6. examine SmartDNS
+7. examine MosDNS
+0. Return to previous level
 ==============================================
 EOF_CHECK_MENU
 }
@@ -248,7 +248,7 @@ read_from_tty() {
     if [ -r /dev/tty ]; then
         read -r "$1" </dev/tty
     else
-        die "当前环境不可交互，请改用非交互参数模式"
+        die "The current environment is not interactive, please use non-interactive parameter mode instead."
     fi
 }
 
@@ -340,11 +340,11 @@ run_action() {
             download_and_run uninstall.sh openclash --delete-config
             ;;
         0)
-            log "已退出"
+            log "Exited"
             exit 0
             ;;
         *)
-            printf '%s\n' '[WARN] 无效选项，请重新输入'
+            printf '%s\n' '[WARN] Invalid option, please re-enter'
             ;;
     esac
 }
@@ -352,7 +352,7 @@ run_action() {
 run_check_update_menu() {
     while true; do
         show_check_update_menu
-        printf '请输入选项 [0-7]: ' >/dev/tty
+        printf 'Please enter options [0-7]: ' >/dev/tty
         read_from_tty subchoice
         case "$subchoice" in
             1)
@@ -380,10 +380,10 @@ run_check_update_menu() {
                 return 0
                 ;;
             *)
-                printf '%s\n' '[WARN] 无效选项，请重新输入'
+                printf '%s\n' '[WARN] Invalid option, please re-enter'
                 ;;
         esac
-        printf '\n按回车键返回检查插件更新菜单...' >/dev/tty
+        printf '\nPress Enter to return to the Check Plug-in Updates menu...' >/dev/tty
         read_from_tty _subdummy
         printf '\n'
     done
@@ -392,7 +392,7 @@ run_check_update_menu() {
 run_install_menu() {
     while true; do
         show_install_menu
-        printf '请输入选项 [0-10]: ' >/dev/tty
+        printf 'Please enter options [0-10]: ' >/dev/tty
         read_from_tty subchoice
         case "$subchoice" in
             1)
@@ -429,10 +429,10 @@ run_install_menu() {
                 return 0
                 ;;
             *)
-                printf '%s\n' '[WARN] 无效选项，请重新输入'
+                printf '%s\n' '[WARN] Invalid option, please re-enter'
                 ;;
         esac
-        printf '\n按回车键返回安装插件菜单...' >/dev/tty
+        printf '\nPress Enter to return to the plug-in installation menu...' >/dev/tty
         read_from_tty _subdummy
         printf '\n'
     done
@@ -441,7 +441,7 @@ run_install_menu() {
 run_uninstall_menu() {
     while true; do
         show_uninstall_menu
-        printf '请输入选项 [0-6]: ' >/dev/tty
+        printf 'Please enter options [0-6]: ' >/dev/tty
         read_from_tty subchoice
         case "$subchoice" in
             1)
@@ -466,10 +466,10 @@ run_uninstall_menu() {
                 return 0
                 ;;
             *)
-                printf '%s\n' '[WARN] 无效选项，请重新输入'
+                printf '%s\n' '[WARN] Invalid option, please re-enter'
                 ;;
         esac
-        printf '\n按回车键返回卸载插件菜单...' >/dev/tty
+        printf '\nPress Enter to return to the uninstall plug-in menu...' >/dev/tty
         read_from_tty _subdummy
         printf '\n'
     done
@@ -486,12 +486,12 @@ main() {
 
     while true; do
         show_menu
-        printf '请输入选项 [0-3]: ' >/dev/tty
+        printf 'Please enter options [0-3]: ' >/dev/tty
         read_from_tty choice
         SKIP_MAIN_PAUSE="0"
         run_action "$choice"
         if [ "$SKIP_MAIN_PAUSE" != "1" ]; then
-            printf '\n按回车键返回菜单...' >/dev/tty
+            printf '\nPress the Enter key to return to the menu...' >/dev/tty
             read_from_tty _dummy
             printf '\n'
         fi

@@ -28,18 +28,18 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 usage() {
     cat <<'EOF_USAGE'
-用法:
-  sh smartdns.sh [选项]
+usage:
+  sh smartdns.sh [Options]
 
-选项:
-  --skip-restart      完成后不尝试启用 / 重启 smartdns
-  --skip-pkg-update   跳过 opkg update / apk update
-  -h, --help          显示帮助
+Options:
+  --skip-restart      Don't try to enable when done / Restart smartdns
+  --skip-pkg-update   jump over opkg update / apk update
+  -h, --help          show help
 EOF_USAGE
 }
 
@@ -57,7 +57,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                die "未知参数: $1"
+                die "unknown parameters: $1"
                 ;;
         esac
         shift
@@ -70,7 +70,7 @@ detect_pkg_mgr() {
     elif command -v apk >/dev/null 2>&1; then
         printf 'apk'
     else
-        die "未检测到 opkg 或 apk，当前系统暂不支持"
+        die "not detected opkg or apk, the current system does not support it yet"
     fi
 }
 
@@ -125,7 +125,7 @@ download_url() {
     elif command -v wget >/dev/null 2>&1; then
         wget -qO "$OUT" --user-agent="openclaw-openwrt-installer" "$URL"
     else
-        die "缺少 curl 或 wget，无法下载文件"
+        die "Lack curl or wget, unable to download file"
     fi
 }
 
@@ -146,7 +146,7 @@ download_github_api() {
             --header="X-GitHub-Api-Version: 2022-11-28" \
             "$URL"
     else
-        die "缺少 curl 或 wget，无法下载文件"
+        die "Lack curl or wget, unable to download file"
     fi
 }
 
@@ -155,15 +155,15 @@ fetch_release_json() {
         return 0
     fi
 
-    warn "GitHub API 获取失败，尝试从 Release 页面解析下载列表"
-    download_url "https://github.com/pymumu/smartdns/releases/latest" "$TMP_ROOT/latest.html" || die "获取 SmartDNS 最新 Release 页面失败"
+    warn "GitHub API Failed to get, try to get from Release Page parsing download list"
+    download_url "https://github.com/pymumu/smartdns/releases/latest" "$TMP_ROOT/latest.html" || die "Get SmartDNS up to date Release Page failed"
 
     LATEST_TAG="$(sed -n 's#.*releases/tag/\(Release[^"?<> ]*\).*#\1#p' "$TMP_ROOT/latest.html" | head -n1 || true)"
-    [ -n "$LATEST_TAG" ] || die "无法解析 SmartDNS 最新 Release 标签"
+    [ -n "$LATEST_TAG" ] || die "Unable to parse SmartDNS up to date Release Label"
 
-    download_url "https://github.com/pymumu/smartdns/releases/expanded_assets/$LATEST_TAG" "$TMP_ROOT/assets.html" || die "获取 SmartDNS Release 资产列表失败"
+    download_url "https://github.com/pymumu/smartdns/releases/expanded_assets/$LATEST_TAG" "$TMP_ROOT/assets.html" || die "Get SmartDNS Release Asset list failed"
     sed -n 's#.*href="\(/pymumu/smartdns/releases/download/[^"?]*\)".*#{"browser_download_url":"https://github.com\1"}#p' "$TMP_ROOT/assets.html" > "$TMP_ROOT/release.json"
-    [ -s "$TMP_ROOT/release.json" ] || die "无法解析 SmartDNS Release 资产下载链接"
+    [ -s "$TMP_ROOT/release.json" ] || die "Unable to parse SmartDNS Release Asset download link"
 }
 
 find_asset_url() {
@@ -186,18 +186,18 @@ get_installed_version() {
 maybe_update_index() {
     PKG_MGR="$1"
     if [ "$FORCE_PKG_UPDATE" != "1" ]; then
-        log "按参数跳过软件源更新"
+        log "Skip software source updates by parameter"
         return 0
     fi
 
     case "$PKG_MGR" in
         opkg)
-            log "刷新 opkg 软件源索引"
-            opkg update || warn "opkg update 失败，将继续尝试安装 GitHub Release 包"
+            log "refresh opkg Software source index"
+            opkg update || warn "opkg update Failure, will continue to try to install GitHub Release Bag"
             ;;
         apk)
-            log "刷新 apk 软件源索引"
-            apk update || warn "apk update 失败，将继续尝试安装 GitHub Release 包"
+            log "refresh apk Software source index"
+            apk update || warn "apk update Failure, will continue to try to install GitHub Release Bag"
             ;;
     esac
 }
@@ -220,50 +220,50 @@ install_release_packages() {
     CORE_URL="$(find_asset_url "smartdns\..*\.${SMARTDNS_ARCH}-openwrt-all\.${EXT}$")"
     LUCI_URL="$(find_asset_url "luci-app-smartdns\..*\.all-luci-all\.${EXT}$")"
 
-    [ -n "$CORE_URL" ] || die "未找到当前架构的 SmartDNS Release 包: $SMARTDNS_ARCH / $EXT"
-    [ -n "$LUCI_URL" ] || die "未找到 LuCI SmartDNS Release 包: $EXT"
+    [ -n "$CORE_URL" ] || die "Not found for current architecture SmartDNS Release Bag: $SMARTDNS_ARCH / $EXT"
+    [ -n "$LUCI_URL" ] || die "not found LuCI SmartDNS Release Bag: $EXT"
 
     CORE_PKG="$TMP_ROOT/$(basename "$CORE_URL")"
     LUCI_PKG="$TMP_ROOT/$(basename "$LUCI_URL")"
 
-    log "下载 SmartDNS: $(basename "$CORE_PKG")"
-    download_url "$CORE_URL" "$CORE_PKG" || die "下载 SmartDNS 包失败"
+    log "download SmartDNS: $(basename "$CORE_PKG")"
+    download_url "$CORE_URL" "$CORE_PKG" || die "download SmartDNS Package failed"
 
-    log "下载 LuCI SmartDNS: $(basename "$LUCI_PKG")"
-    download_url "$LUCI_URL" "$LUCI_PKG" || die "下载 LuCI SmartDNS 包失败"
+    log "download LuCI SmartDNS: $(basename "$LUCI_PKG")"
+    download_url "$LUCI_URL" "$LUCI_PKG" || die "download LuCI SmartDNS Package failed"
 
-    log "安装 / 更新 SmartDNS"
+    log "Install / renew SmartDNS"
     # shellcheck disable=SC2086
-    $INSTALL_CMD "$CORE_PKG" || die "安装 SmartDNS 失败，请检查系统依赖或软件源"
+    $INSTALL_CMD "$CORE_PKG" || die "Install SmartDNS Failed, please check system dependencies or software sources"
 
     if [ "$PKG_MGR" = "opkg" ] && opkg status luci-i18n-smartdns-zh-cn >/dev/null 2>&1; then
-        warn "检测到旧版 luci-i18n-smartdns-zh-cn 可能与新版 luci-app-smartdns 文件冲突，使用 --force-depends 预先移除"
-        opkg remove --force-depends luci-i18n-smartdns-zh-cn || die "移除冲突语言包失败，请手动执行: opkg remove --force-depends luci-i18n-smartdns-zh-cn"
+        warn "Old version detected luci-i18n-smartdns-zh-cn Possibly with new version luci-app-smartdns File conflicts, use --force-depends pre-remove"
+        opkg remove --force-depends luci-i18n-smartdns-zh-cn || die "Failed to remove conflicting language pack, please do it manually: opkg remove --force-depends luci-i18n-smartdns-zh-cn"
     fi
 
-    log "安装 / 更新 LuCI SmartDNS 界面"
+    log "Install / renew LuCI SmartDNS interface"
     # shellcheck disable=SC2086
-    $INSTALL_CMD "$LUCI_PKG" || die "安装 LuCI SmartDNS 失败，请检查系统依赖或软件源"
+    $INSTALL_CMD "$LUCI_PKG" || die "Install LuCI SmartDNS Failed, please check system dependencies or software sources"
 }
 
 refresh_luci() {
     rm -rf /tmp/luci-* /tmp/.luci* /tmp/etc/config/ucitrack /var/run/luci-indexcache 2>/dev/null || true
     if [ -x /etc/init.d/rpcd ]; then
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed"
     fi
 }
 
 restart_smartdns() {
     if [ "$RESTART_SERVICES" != "1" ]; then
-        log "按参数跳过 smartdns 启用 / 重启"
+        log "Skip by parameter smartdns enable / Restart"
         return 0
     fi
 
     if [ -x /etc/init.d/smartdns ]; then
-        /etc/init.d/smartdns enable >/dev/null 2>&1 || warn "smartdns enable 失败"
-        /etc/init.d/smartdns restart >/dev/null 2>&1 || warn "smartdns restart 失败"
+        /etc/init.d/smartdns enable >/dev/null 2>&1 || warn "smartdns enable fail"
+        /etc/init.d/smartdns restart >/dev/null 2>&1 || warn "smartdns restart fail"
     else
-        warn "未发现 /etc/init.d/smartdns，跳过服务重启"
+        warn "not found /etc/init.d/smartdns, skip service restart"
     fi
 }
 
@@ -271,7 +271,7 @@ main() {
     parse_args "$@"
 
     if ! mkdir "$LOCKDIR" 2>/dev/null; then
-        die "已有另一个 SmartDNS 任务正在运行"
+        die "There is already another SmartDNS Task is running"
     fi
     mkdir -p "$TMP_ROOT"
 
@@ -282,12 +282,12 @@ main() {
 
     PKG_MGR="$(detect_pkg_mgr)"
     SMARTDNS_ARCH="$(detect_smartdns_arch)"
-    [ -n "$SMARTDNS_ARCH" ] || die "暂不支持当前架构: $(uname -m 2>/dev/null || printf unknown)"
+    [ -n "$SMARTDNS_ARCH" ] || die "The current architecture is not supported yet: $(uname -m 2>/dev/null || printf unknown)"
 
-    log "检测到包管理器: $PKG_MGR"
-    log "检测到 SmartDNS 架构: $SMARTDNS_ARCH"
+    log "Package manager detected: $PKG_MGR"
+    log "detected SmartDNS Architecture: $SMARTDNS_ARCH"
     OLD_VER="$(get_installed_version "$PKG_MGR")"
-    log "当前已安装版本: ${OLD_VER:-not installed}"
+    log "Currently installed version: ${OLD_VER:-not installed}"
 
     maybe_update_index "$PKG_MGR"
     fetch_release_json
@@ -296,10 +296,10 @@ main() {
     refresh_luci
 
     NEW_VER="$(get_installed_version "$PKG_MGR")"
-    log "安装后版本: ${NEW_VER:-unknown}"
-    warn "默认不主动改写 /etc/config/smartdns；请在 LuCI 中按你的网络环境启用或调整 DNS 转发设置"
-    warn "如果 LuCI 菜单未立即出现，请刷新页面或重新登录 LuCI"
-    log "SmartDNS 处理完成"
+    log "Post-installation version: ${NEW_VER:-unknown}"
+    warn "Not actively rewritten by default /etc/config/smartdns;please LuCI Click on your network environment to enable or adjust DNS Forwarding settings"
+    warn "if LuCI The menu does not appear immediately, please refresh the page or log in again LuCI"
+    log "SmartDNS Processing completed"
 }
 
 main "$@"

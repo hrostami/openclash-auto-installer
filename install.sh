@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-# OpenClash 一键安装 / 更新脚本
-# 适用场景：OpenWrt / iStoreOS / ImmortalWrt 等兼容 opkg / apk 的环境
+# OpenClash One click installation / update script
+# Applicable scenarios:OpenWrt / iStoreOS / ImmortalWrt etc. Compatible opkg / apk environment
 
 LOCKDIR="/tmp/openclash-auto-install.lock"
 TMP_ROOT="/tmp/openclash-auto-install"
@@ -35,24 +35,24 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 usage() {
     cat <<'EOF_USAGE'
-用法:
-  sh install.sh [选项]
+usage:
+  sh install.sh [Options]
 
-选项:
-  --plugin-only       只安装/更新 OpenClash 插件，不安装 Meta 内核
-  --core-only         只下载并安装 Meta 内核，不安装/更新插件
-  --check-update      只检查是否有新版本，不执行安装/更新
-  --meta-core         强制使用普通 Meta 内核
-  --smart-core        强制使用 Smart Meta 内核
-  --skip-restart      完成后不尝试重启 openclash / uhttpd
-  --skip-pkg-update   跳过软件源更新（opkg update / apk update）
-  --skip-opkg-update  兼容旧参数，等同于 --skip-pkg-update
-  -h, --help          显示帮助
+Options:
+  --plugin-only       Install only/renew OpenClash Plug-in, not installed Meta Kernel
+  --core-only         Just download and install Meta Kernel, not installed/Update plugin
+  --check-update      Only checks if there is a new version and does not perform installation/renew
+  --meta-core         Force normal Meta Kernel
+  --smart-core        Mandatory use Smart Meta Kernel
+  --skip-restart      Do not attempt to restart after completion openclash / uhttpd
+  --skip-pkg-update   Skip software source updates (opkg update / apk update)
+  --skip-opkg-update  Compatible with old parameters, equivalent to --skip-pkg-update
+  -h, --help          show help
 EOF_USAGE
 }
 
@@ -85,7 +85,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                die "未知参数: $1"
+                die "unknown parameters: $1"
                 ;;
         esac
         shift
@@ -97,7 +97,7 @@ trap cleanup EXIT INT TERM
 parse_args "$@"
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-    die "已有另一个安装/更新任务正在运行"
+    die "There is already another installation/Update task is running"
 fi
 
 mkdir -p "$TMP_ROOT"
@@ -153,7 +153,7 @@ detect_pkg_mgr() {
     elif command -v apk >/dev/null 2>&1; then
         printf 'apk'
     else
-        die "未检测到 opkg 或 apk，当前系统暂不支持"
+        die "not detected opkg or apk, the current system does not support it yet"
     fi
 }
 
@@ -237,35 +237,35 @@ get_installed_openclash_version() {
 
 maybe_update_index_opkg() {
     if [ "$FORCE_OPKG_UPDATE" != "1" ]; then
-        log "按参数跳过 opkg update"
+        log "Skip by parameter opkg update"
         return 0
     fi
 
-    log "更新 opkg 软件索引"
+    log "renew opkg software index"
     if opkg update; then
         return 0
     fi
 
     if [ -e /var/lock/opkg.lock ]; then
-        warn "检测到 opkg.lock，可能有其他包管理任务正在运行"
-        warn "将在 ${OPKG_RETRY_SECONDS} 秒后重试一次 opkg update"
+        warn "detected opkg.lock, there may be other package management tasks running"
+        warn "will be in ${OPKG_RETRY_SECONDS} Try again after seconds opkg update"
         sleep "$OPKG_RETRY_SECONDS"
         if opkg update; then
             return 0
         fi
     fi
 
-    warn "opkg update 未完全成功，可能是某个第三方 feed 临时不可用"
-    warn "将继续尝试安装；如果后续依赖安装失败，请修复 /etc/opkg/customfeeds.conf 后重试"
+    warn "opkg update Not entirely successful, possibly a third party feed Temporarily unavailable"
+    warn "Will continue to try to install; if subsequent dependency installation fails, please fix it /etc/opkg/customfeeds.conf Try again later"
     return 0
 }
 
 maybe_update_index_apk() {
     if [ "$FORCE_OPKG_UPDATE" = "1" ]; then
-        log "更新 apk 软件索引"
+        log "renew apk software index"
         apk update
     else
-        log "按参数跳过 apk update"
+        log "Skip by parameter apk update"
     fi
 }
 
@@ -279,7 +279,7 @@ install_dependencies_opkg() {
         PKGS="bash iptables dnsmasq-full curl ca-bundle ipset ip-full iptables-mod-tproxy iptables-mod-extra kmod-tun kmod-inet-diag unzip jsonfilter"
     fi
 
-    log "安装最小依赖包"
+    log "Install minimal dependency packages"
     opkg install $PKGS
 }
 
@@ -293,18 +293,18 @@ install_dependencies_apk() {
         PKGS="bash iptables dnsmasq-full curl ca-bundle ipset ip-full iptables-mod-tproxy iptables-mod-extra kmod-tun kmod-inet-diag unzip jsonfilter"
     fi
 
-    log "安装最小依赖包"
+    log "Install minimal dependency packages"
     apk add $PKGS
 }
 
 fetch_openclash_release_meta() {
     VERSION_JSON="$TMP_ROOT/openclash_version.json"
-    printf '%s\n' "==> 获取 OpenClash 最新发布信息" >&2
+    printf '%s\n' "==> Get OpenClash Latest release information" >&2
     if download_file "$API_URL" "$VERSION_JSON"; then
         return 0
     fi
 
-    warn "GitHub API 获取失败，尝试回退到 releases 页面解析"
+    warn "GitHub API Failed to obtain, try to fall back to releases Page parsing"
     return 1
 }
 
@@ -334,15 +334,15 @@ check_update_only() {
     fetch_openclash_release_meta || true
     LATEST_TAG="$(get_latest_tag)"
 
-    log "当前已安装版本: ${OLD_VER:-not installed}"
-    log "OpenClash 最新发布标签: ${LATEST_TAG:-unknown}"
+    log "Currently installed version: ${OLD_VER:-not installed}"
+    log "OpenClash Latest release tags: ${LATEST_TAG:-unknown}"
 
     if [ -z "${LATEST_TAG:-}" ]; then
-        die "获取最新版本失败"
+        die "Failed to get latest version"
     fi
 
     if [ -z "${OLD_VER:-}" ]; then
-        log "当前未安装 OpenClash，可直接执行安装"
+        log "Not currently installed OpenClash, you can directly perform the installation"
         return 0
     fi
 
@@ -350,11 +350,11 @@ check_update_only() {
     LATEST_NORM="$(normalize_version "$LATEST_TAG")"
 
     if [ "$OLD_NORM" = "$LATEST_NORM" ]; then
-        log "当前已经是最新版本，无需更新"
+        log "It is already the latest version, no need to update"
     else
-        log "检测到新版本可更新"
-        log "如需更新，可执行: sh install.sh --skip-pkg-update"
-        log "如需仅更新插件，可执行: sh install.sh --plugin-only --skip-pkg-update"
+        log "New version detected and can be updated"
+        log "If you need to update, you can execute: sh install.sh --skip-pkg-update"
+        log "If you want to update only the plug-in, you can execute: sh install.sh --plugin-only --skip-pkg-update"
     fi
 }
 
@@ -379,9 +379,9 @@ fetch_openclash_package_url() {
 
     if [ -z "$OPENCLASH_PKG_URL" ]; then
         TAG="$(get_latest_tag)"
-        [ -n "$TAG" ] || die "未找到 OpenClash 最新版本标签"
+        [ -n "$TAG" ] || die "not found OpenClash Latest version label"
         ASSETS_HTML="$TMP_ROOT/openclash_assets.html"
-        download_file "https://github.com/vernesong/OpenClash/releases/expanded_assets/$TAG" "$ASSETS_HTML" || die "获取 OpenClash 资源列表失败"
+        download_file "https://github.com/vernesong/OpenClash/releases/expanded_assets/$TAG" "$ASSETS_HTML" || die "Get OpenClash Resource list failed"
         if [ "$PKG_MGR" = "opkg" ]; then
             OPENCLASH_PKG_URL="$(grep -o '/vernesong/OpenClash/releases/download/[^"'"'"']*luci-app-openclash[^"'"'"']*\.ipk' "$ASSETS_HTML" | head -n1 || true)"
         else
@@ -390,7 +390,7 @@ fetch_openclash_package_url() {
         [ -n "$OPENCLASH_PKG_URL" ] && OPENCLASH_PKG_URL="https://github.com$OPENCLASH_PKG_URL"
     fi
 
-    [ -n "$OPENCLASH_PKG_URL" ] || die "未找到匹配当前包管理器的 OpenClash 安装包"
+    [ -n "$OPENCLASH_PKG_URL" ] || die "No match found for the current package manager OpenClash Installation package"
     printf '%s' "$OPENCLASH_PKG_URL"
 }
 
@@ -401,18 +401,18 @@ install_openclash_package() {
     case "$PKG_MGR" in
         opkg)
             PKG_FILE="$TMP_ROOT/openclash.ipk"
-            log "下载 OpenClash IPK: $DOWNLOAD_URL"
-            download_file "$DOWNLOAD_URL" "$PKG_FILE" || die "下载 OpenClash IPK 失败"
+            log "download OpenClash IPK: $DOWNLOAD_URL"
+            download_file "$DOWNLOAD_URL" "$PKG_FILE" || die "download OpenClash IPK fail"
             opkg install "$PKG_FILE"
             ;;
         apk)
             PKG_FILE="$TMP_ROOT/openclash.apk"
-            log "下载 OpenClash APK: $DOWNLOAD_URL"
-            download_file "$DOWNLOAD_URL" "$PKG_FILE" || die "下载 OpenClash APK 失败"
+            log "download OpenClash APK: $DOWNLOAD_URL"
+            download_file "$DOWNLOAD_URL" "$PKG_FILE" || die "download OpenClash APK fail"
             apk add -q --force-overwrite --clean-protected --allow-untrusted "$PKG_FILE"
             ;;
         *)
-            die "未知包管理器: $PKG_MGR"
+            die "Unknown package manager: $PKG_MGR"
             ;;
     esac
 }
@@ -474,7 +474,7 @@ download_core() {
 
     for file in $CANDIDATES; do
         URL="$CORE_BASE_URL/$file"
-        log "尝试下载 ${CHANNEL} 内核: $URL"
+        log "try download ${CHANNEL} Kernel: $URL"
         if download_file "$URL" "$TMP_CORE"; then
             CHOSEN_CORE_FILE="$file"
             CHOSEN_CORE_CHANNEL="$CHANNEL"
@@ -494,11 +494,11 @@ extract_and_install_core() {
     mkdir -p "$TMP_DIR"
     mkdir -p /etc/openclash/core
 
-    tar zxf "$TMP_CORE" -C "$TMP_DIR" >/dev/null 2>&1 || die "解压 Meta 内核失败"
+    tar zxf "$TMP_CORE" -C "$TMP_DIR" >/dev/null 2>&1 || die "Unzip Meta Kernel failed"
 
     BIN_FILE="$(find "$TMP_DIR" -type f -perm -u+x 2>/dev/null | head -n1 || true)"
     [ -n "$BIN_FILE" ] || BIN_FILE="$(find "$TMP_DIR" -type f 2>/dev/null | head -n1 || true)"
-    [ -n "$BIN_FILE" ] || die "内核压缩包中未找到可用文件"
+    [ -n "$BIN_FILE" ] || die "No available files found in the kernel archive"
 
     if [ -f /etc/openclash/core/clash_meta ]; then
         cp -f /etc/openclash/core/clash_meta /etc/openclash/core/clash_meta.bak 2>/dev/null || true
@@ -507,67 +507,67 @@ extract_and_install_core() {
     cp -f "$BIN_FILE" /etc/openclash/core/clash_meta
     chmod 0755 /etc/openclash/core/clash_meta
 
-    log "Meta 内核已安装到 /etc/openclash/core/clash_meta"
+    log "Meta The kernel has been installed to /etc/openclash/core/clash_meta"
 }
 
 restart_related_services() {
     CHANGED="${1:-1}"
 
     if [ "$RESTART_SERVICES" != "1" ]; then
-        log "按参数跳过服务重启"
+        log "Skip service restart by parameter"
         return 0
     fi
 
     if [ "$CHANGED" != "1" ]; then
-        log "版本未变化且未强制变更，跳过服务重启"
+        log "The version has not changed and no forced changes have been made. Service restart is skipped."
         return 0
     fi
 
     if [ -x /etc/init.d/openclash ]; then
-        log "尝试重启 OpenClash 服务"
-        /etc/init.d/openclash restart >/dev/null 2>&1 || warn "OpenClash 服务重启失败，可稍后手动重启"
+        log "Try restarting OpenClash Serve"
+        /etc/init.d/openclash restart >/dev/null 2>&1 || warn "OpenClash The service restart failed and can be restarted manually later."
     fi
 
-    log "清理 LuCI 菜单缓存"
+    log "clean up LuCI menu cache"
     rm -rf /tmp/luci-* /tmp/.luci* /tmp/etc/config/ucitrack /var/run/luci-indexcache 2>/dev/null || true
 
     if [ -x /etc/init.d/rpcd ]; then
-        log "尝试重启 rpcd"
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败，可稍后手动重启"
+        log "Try restarting rpcd"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed, you can manually restart later"
     fi
 }
 
 show_runtime_versions() {
     if [ -n "${NEW_VER:-}" ]; then
-        log "当前 OpenClash 插件版本: ${NEW_VER}"
+        log "current OpenClash Plugin version: ${NEW_VER}"
     elif [ -n "${OLD_VER:-}" ]; then
-        log "当前 OpenClash 插件版本: ${OLD_VER}"
+        log "current OpenClash Plugin version: ${OLD_VER}"
     fi
 
     if [ -n "${CHOSEN_CORE_CHANNEL:-}" ]; then
-        log "本次安装核心通道: ${CHOSEN_CORE_CHANNEL}"
+        log "This time the core channel is installed: ${CHOSEN_CORE_CHANNEL}"
     fi
 
     if [ -x /etc/openclash/core/clash_meta ]; then
         CORE_VER="$(/etc/openclash/core/clash_meta -v 2>/dev/null | head -n1 || true)"
         if [ -n "$CORE_VER" ]; then
-            log "当前 Meta 内核版本: $CORE_VER"
+            log "current Meta Kernel version: $CORE_VER"
         else
-            warn "已检测到 clash_meta 文件，但未能读取版本信息"
+            warn "Detected clash_meta file, but could not read version information"
         fi
     else
-        warn "未检测到 /etc/openclash/core/clash_meta"
+        warn "not detected /etc/openclash/core/clash_meta"
     fi
 }
 
 show_summary() {
     cat <<EOF_SUMMARY
-==> 完成
-==> 建议下一步：
- 1. 刷新 LuCI 页面
- 2. 进入 服务 -> OpenClash
- 3. 如果页面中的内核版本未及时刷新，请以命令行输出为准
- 4. 导入订阅后再启动
+==> Finish
+==> Suggested next steps:
+ 1. refresh LuCI page
+ 2. Enter Serve -> OpenClash
+ 3. If the kernel version on the page is not refreshed in time, please refer to the command line output.
+ 4. Import the subscription and then start it
 EOF_SUMMARY
 }
 
@@ -588,23 +588,23 @@ main() {
     PLUGIN_CHANGED="0"
     CORE_CHANGED="0"
 
-    log "脚本名称: $SCRIPT_NAME"
-    log "执行模式: $MODE"
-    log "核心通道策略: $CORE_CHANNEL"
-    log "包管理器: $PKG_MGR"
-    log "防火墙栈: $FIREWALL_STACK"
+    log "Script name: $SCRIPT_NAME"
+    log "execution mode: $MODE"
+    log "Core channel strategy: $CORE_CHANNEL"
+    log "Package manager: $PKG_MGR"
+    log "firewall stack: $FIREWALL_STACK"
     log "uname -m: ${RAW_ARCH:-unknown}"
     log "DISTRIB_ARCH: ${DIST_ARCH:-unknown}"
     [ -n "$DIST_RELEASE" ] && log "DISTRIB_RELEASE: $DIST_RELEASE"
     if [ -n "$DIST_RELEASE" ] && printf '%s\n' "$DIST_RELEASE" | grep -q '^25\.12'; then
         if [ "$PKG_MGR" = "apk" ]; then
-            warn "检测到 OpenWrt 25.12+ 与 apk 包管理器，将按 apk 兼容路径安装。"
-            warn "如遇安装失败，请保留完整日志，通常是上游包或系统依赖尚未适配。"
+            warn "detected OpenWrt 25.12+ and apk package manager, press apk Compatible path installation."
+            warn "If the installation fails, please keep the complete log. Usually the upstream package or system dependency has not been adapted."
         else
-            warn "检测到 OpenWrt 25.12+，但包管理器为 $PKG_MGR，请确认当前环境是否正常。"
+            warn "detected OpenWrt 25.12+, but the package manager is $PKG_MGR, please confirm whether the current environment is normal."
         fi
     fi
-    log "当前已安装版本: ${OLD_VER:-not installed}"
+    log "Currently installed version: ${OLD_VER:-not installed}"
 
     if [ "$CHECK_ONLY" = "1" ]; then
         check_update_only "$PKG_MGR"
@@ -620,12 +620,12 @@ main() {
             need_cmd jsonfilter
             fetch_openclash_release_meta || true
             LATEST_TAG="$(get_latest_tag)"
-            [ -n "$LATEST_TAG" ] && log "OpenClash 最新发布标签: $LATEST_TAG"
+            [ -n "$LATEST_TAG" ] && log "OpenClash Latest release tags: $LATEST_TAG"
             PACKAGE_URL="$(fetch_openclash_package_url "$PKG_MGR")"
-            log "安装 / 更新 OpenClash 插件"
+            log "Install / renew OpenClash plug-in"
             install_openclash_package "$PKG_MGR" "$PACKAGE_URL"
             NEW_VER="$(get_installed_openclash_version "$PKG_MGR" || true)"
-            log "安装后版本: ${NEW_VER:-unknown}"
+            log "Post-installation version: ${NEW_VER:-unknown}"
             if [ "${OLD_VER:-}" != "${NEW_VER:-}" ]; then
                 PLUGIN_CHANGED="1"
             fi
@@ -636,21 +636,21 @@ main() {
         full|core-only)
             CORE_CANDIDATES="$(detect_core_candidates)"
             if [ -z "$CORE_CANDIDATES" ]; then
-                warn "未识别的 CPU 架构，无法自动匹配 Meta 内核"
-                warn "请在 OpenClash 页面中手动下载匹配内核"
+                warn "Unidentified CPU Schema, cannot be automatically matched Meta Kernel"
+                warn "please OpenClash Manually download the matching kernel from the page"
                 show_summary
                 exit 0
             fi
 
             RESOLVED_CORE_CHANNEL="$(resolve_core_channel)"
-            log "本次使用核心通道: $RESOLVED_CORE_CHANNEL"
-            log "候选 Meta 内核: $CORE_CANDIDATES"
+            log "This time we use the core channel: $RESOLVED_CORE_CHANNEL"
+            log "candidate Meta Kernel: $CORE_CANDIDATES"
             if download_core "$RESOLVED_CORE_CHANNEL" "$CORE_CANDIDATES"; then
-                log "已下载匹配内核包: $CHOSEN_CORE_FILE"
+                log "Matching kernel package downloaded: $CHOSEN_CORE_FILE"
                 extract_and_install_core
                 CORE_CHANGED="1"
             else
-                warn "自动下载 ${RESOLVED_CORE_CHANNEL} 内核失败，请在 OpenClash 页面手动下载"
+                warn "Automatic download ${RESOLVED_CORE_CHANNEL} Kernel failed, please check OpenClash Page manual download"
                 show_summary
                 exit 0
             fi

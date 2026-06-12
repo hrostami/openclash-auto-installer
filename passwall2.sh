@@ -24,13 +24,13 @@ die() {
 }
 
 need_cmd() {
-    command -v "$1" >/dev/null 2>&1 || die "缺少命令: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Missing command: $1"
 }
 
 refresh_luci() {
     rm -rf /tmp/luci-* /tmp/.luci* /tmp/etc/config/ucitrack /var/run/luci-indexcache 2>/dev/null || true
     if [ -x /etc/init.d/rpcd ]; then
-        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd 重启失败"
+        /etc/init.d/rpcd restart >/dev/null 2>&1 || warn "rpcd Restart failed"
     fi
 }
 
@@ -86,14 +86,14 @@ download_pkg_from_dir() {
     output="/tmp/$filename"
     download_url="https://sourceforge.net${link}/download"
 
-    printf '%s\n' "==> 下载: $filename" >&2
+    printf '%s\n' "==> download: $filename" >&2
     download_file "$download_url" "$output" || return 1
     [ -s "$output" ] || return 1
     printf '%s\n' "$output"
 }
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-    die "已有另一个 PassWall2 任务正在运行"
+    die "There is already another PassWall2 Task is running"
 fi
 
 if command -v opkg >/dev/null 2>&1; then
@@ -101,7 +101,7 @@ if command -v opkg >/dev/null 2>&1; then
 elif command -v apk >/dev/null 2>&1; then
     PKG_MGR="apk"
 else
-    die "未检测到 opkg 或 apk，当前系统暂不支持"
+    die "not detected opkg or apk, the current system does not support it yet"
 fi
 
 need_cmd "$PKG_MGR"
@@ -109,15 +109,15 @@ need_cmd sed
 need_cmd grep
 need_cmd basename
 
-[ -f /etc/openwrt_release ] || die "未检测到 /etc/openwrt_release"
+[ -f /etc/openwrt_release ] || die "not detected /etc/openwrt_release"
 # shellcheck disable=SC1091
 . /etc/openwrt_release
 
 ARCH="${DISTRIB_ARCH:-}"
 REL_RAW="${DISTRIB_RELEASE:-}"
 TARGET_NAME="${DISTRIB_TARGET:-}"
-[ -n "$ARCH" ] || die "无法识别系统架构"
-[ -n "$REL_RAW" ] || die "无法识别系统版本"
+[ -n "$ARCH" ] || die "Unable to identify system architecture"
+[ -n "$REL_RAW" ] || die "Unable to identify system version"
 
 normalize_release_for_passwall2() {
     rel="$1"
@@ -133,7 +133,7 @@ normalize_release_for_passwall2() {
 }
 
 SUPPORTED_RELEASE="$(normalize_release_for_passwall2 "$REL_RAW" "$PKG_MGR")"
-[ -n "$SUPPORTED_RELEASE" ] || die "当前系统版本 ${REL_RAW} / 包管理器 ${PKG_MGR} 暂未适配 PassWall2 安装脚本。建议使用 OpenWrt 25.12+ apk，或 OpenWrt/iStoreOS/ImmortalWrt 22.03、23.05、24.10 opkg 系。"
+[ -n "$SUPPORTED_RELEASE" ] || die "Current system version ${REL_RAW} / Package manager ${PKG_MGR} Not adapted yet PassWall2 Install script. Recommended OpenWrt 25.12+ apk,or OpenWrt/iStoreOS/ImmortalWrt 22.03,23.05,24.10 opkg Tie."
 
 case "$SUPPORTED_RELEASE" in
     snapshots)
@@ -150,10 +150,10 @@ log "Package manager: $PKG_MGR"
 [ -n "$TARGET_NAME" ] && log "Target: $TARGET_NAME"
 log "Package dir: $PACKAGE_DIR"
 if [ "$SUPPORTED_RELEASE" != "$REL_RAW" ]; then
-    warn "当前系统版本 ${REL_RAW} 将按兼容目录 ${SUPPORTED_RELEASE} 匹配 PassWall2 软件源。"
+    warn "Current system version ${REL_RAW} Will press the compatible directory ${SUPPORTED_RELEASE} match PassWall2 Software source."
 fi
 if [ "$PKG_MGR" = "apk" ]; then
-    warn "检测到 OpenWrt 25.12+ apk 环境，将尝试安装上游 .apk 包；若上游尚未发布当前架构构建，会明确失败。"
+    warn "detected OpenWrt 25.12+ apk environment, will try to install the upstream .apk package; will explicitly fail if upstream has not released the current architecture build."
 fi
 
 GH_LATEST="$(fetch_text "$GH_API" 2>/dev/null | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1 || true)"
@@ -169,14 +169,14 @@ case "$PKG_MGR" in
         OLD_VER="$(apk info -a luci-app-passwall2 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)"
         ;;
     *)
-        die "未知包管理器: $PKG_MGR"
+        die "Unknown package manager: $PKG_MGR"
         ;;
 esac
-log "当前已安装版本: ${OLD_VER:-not installed}"
-log "按接近手动 ${PKG_EXT} 的方式安装 / 更新 PassWall2"
+log "Currently installed version: ${OLD_VER:-not installed}"
+log "Press close to manual ${PKG_EXT} Installed by / renew PassWall2"
 
-MAIN_PKG="$(download_pkg_from_dir luci-app-passwall2 passwall2 "$PKG_EXT")" || die "下载 luci-app-passwall2 ${PKG_EXT} 失败，请检查当前系统版本/架构是否存在对应构建，或稍后重试。"
-LANG_PKG="$(download_pkg_from_dir luci-i18n-passwall2-zh-cn passwall2 "$PKG_EXT")" || die "下载 luci-i18n-passwall2-zh-cn ${PKG_EXT} 失败，请稍后重试。"
+MAIN_PKG="$(download_pkg_from_dir luci-app-passwall2 passwall2 "$PKG_EXT")" || die "download luci-app-passwall2 ${PKG_EXT} Failed, please check the current system version/Check whether there is a corresponding build for the architecture, or try again later."
+LANG_PKG="$(download_pkg_from_dir luci-i18n-passwall2-zh-cn passwall2 "$PKG_EXT")" || die "download luci-i18n-passwall2-zh-cn ${PKG_EXT} Failed, please try again later."
 
 case "$PKG_MGR" in
     opkg)
@@ -187,7 +187,7 @@ case "$PKG_MGR" in
         ;;
     apk)
         INSTALL_OK=1
-        apk update || warn "apk update 失败，将继续尝试安装本地安装包"
+        apk update || warn "apk update Failure, will continue to try to install the local installation package"
         if apk add --allow-untrusted "$MAIN_PKG" "$LANG_PKG"; then
             INSTALL_OK=0
         fi
@@ -196,18 +196,18 @@ esac
 
 if [ "$INSTALL_OK" -ne 0 ]; then
     cat >&2 <<EOF
-[ERROR] PassWall2 安装失败。
-可能原因：
-1. 当前固件版本与 PassWall2 预编译包不匹配
-2. 当前架构缺少对应依赖包，或软件源中没有兼容构建
-3. 第三方固件重写了软件源，导致依赖解析异常
+[ERROR] PassWall2 Installation failed.
+Possible reasons:
+1. The current firmware version is the same as PassWall2 Precompiled package does not match
+2. The current architecture lacks corresponding dependency packages, or there is no compatible build in the software source.
+3. Third-party firmware rewrites the software source, causing dependency resolution exceptions
 
-建议排查：
-- OpenWrt 25.12+ / apk 环境请确认上游已发布对应 .apk 构建
-- opkg 环境确认系统版本优先使用 22.03 / 23.05 / 24.10 系
-- 执行 ${PKG_MGR} update 后重试
-- 检查系统软件源配置是否存在异常或重复源
-- 如为非标准固件（如 QWRT / GDQ 等），兼容性取决于上游是否提供对应构建
+Suggested troubleshooting:
+- OpenWrt 25.12+ / apk For the environment, please confirm that the upstream has released the corresponding .apk build
+- opkg Environment confirmation system version is used first 22.03 / 23.05 / 24.10 Tie
+- implement ${PKG_MGR} update Try again later
+- Check whether there are any abnormalities or duplicate sources in the system software source configuration
+- In the case of non-standard firmware (such as QWRT / GDQ etc.), compatibility depends on whether the upstream provides corresponding builds
 EOF
     exit 1
 fi
@@ -216,9 +216,9 @@ case "$PKG_MGR" in
     opkg) NEW_VER="$(opkg status luci-app-passwall2 2>/dev/null | sed -n 's/^Version: //p' | head -n1 || true)" ;;
     apk) NEW_VER="$(apk info -a luci-app-passwall2 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)" ;;
 esac
-log "安装后版本: ${NEW_VER:-unknown}"
+log "Post-installation version: ${NEW_VER:-unknown}"
 
 refresh_luci
-warn "默认不主动修改 /etc/config/passwall2；如界面初次显示异常，可手动刷新页面或重新登录 LuCI"
-warn "如界面初次显示为英文，请刷新页面，中文语言包会自动生效"
-log "PassWall2 处理完成"
+warn "Not actively modified by default /etc/config/passwall2; If the interface displays abnormally for the first time, you can manually refresh the page or log in again. LuCI"
+warn "If the interface is displayed in English for the first time, please refresh the page and the Chinese language pack will automatically take effect."
+log "PassWall2 Processing completed"

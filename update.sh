@@ -13,16 +13,16 @@ die() {
     exit 1
 }
 
-command -v curl >/dev/null 2>&1 || die "缺少 curl 命令"
+command -v curl >/dev/null 2>&1 || die "Lack curl Order"
 
-log "下载最新安装/更新脚本"
-curl -fsSL --retry 3 "$SCRIPT_URL" -o "$TMP_FILE" || die "下载远程脚本失败"
+log "Download the latest installation/update script"
+curl -fsSL --retry 3 "$SCRIPT_URL" -o "$TMP_FILE" || die "Failed to download remote script"
 chmod +x "$TMP_FILE"
 
 if [ "${1:-}" = "--check" ] || [ "${1:-}" = "--check-update" ]; then
-    log "开始检查是否有新版本"
+    log "Start checking for new versions"
     sh "$TMP_FILE" --check-update --skip-pkg-update
 else
-    log "开始执行更新"
+    log "Start performing update"
     sh "$TMP_FILE" --skip-pkg-update "$@"
 fi
